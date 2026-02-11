@@ -19,6 +19,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Claude Code (track settings.json, ignore personal local config)
+.claude/settings.local.json
+
 # Environment
 .env
 .env.local
