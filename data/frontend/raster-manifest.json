@@ -1,0 +1,644 @@
+{
+  "soil_moisture": {
+    "bounds": [
+      -9.6,
+      36.9,
+      -6.1,
+      42.2
+    ],
+    "frames": [
+      {
+        "date": "2025-12-01",
+        "url": "raster-frames/soil-moisture/2025-12-01.png"
+      },
+      {
+        "date": "2025-12-02",
+        "url": "raster-frames/soil-moisture/2025-12-02.png"
+      },
+      {
+        "date": "2025-12-03",
+        "url": "raster-frames/soil-moisture/2025-12-03.png"
+      },
+      {
+        "date": "2025-12-04",
+        "url": "raster-frames/soil-moisture/2025-12-04.png"
+      },
+      {
+        "date": "2025-12-05",
+        "url": "raster-frames/soil-moisture/2025-12-05.png"
+      },
+      {
+        "date": "2025-12-06",
+        "url": "raster-frames/soil-moisture/2025-12-06.png"
+      },
+      {
+        "date": "2025-12-07",
+        "url": "raster-frames/soil-moisture/2025-12-07.png"
+      },
+      {
+        "date": "2025-12-08",
+        "url": "raster-frames/soil-moisture/2025-12-08.png"
+      },
+      {
+        "date": "2025-12-09",
+        "url": "raster-frames/soil-moisture/2025-12-09.png"
+      },
+      {
+        "date": "2025-12-10",
+        "url": "raster-frames/soil-moisture/2025-12-10.png"
+      },
+      {
+        "date": "2025-12-11",
+        "url": "raster-frames/soil-moisture/2025-12-11.png"
+      },
+      {
+        "date": "2025-12-12",
+        "url": "raster-frames/soil-moisture/2025-12-12.png"
+      },
+      {
+        "date": "2025-12-13",
+        "url": "raster-frames/soil-moisture/2025-12-13.png"
+      },
+      {
+        "date": "2025-12-14",
+        "url": "raster-frames/soil-moisture/2025-12-14.png"
+      },
+      {
+        "date": "2025-12-15",
+        "url": "raster-frames/soil-moisture/2025-12-15.png"
+      },
+      {
+        "date": "2025-12-16",
+        "url": "raster-frames/soil-moisture/2025-12-16.png"
+      },
+      {
+        "date": "2025-12-17",
+        "url": "raster-frames/soil-moisture/2025-12-17.png"
+      },
+      {
+        "date": "2025-12-18",
+        "url": "raster-frames/soil-moisture/2025-12-18.png"
+      },
+      {
+        "date": "2025-12-19",
+        "url": "raster-frames/soil-moisture/2025-12-19.png"
+      },
+      {
+        "date": "2025-12-20",
+        "url": "raster-frames/soil-moisture/2025-12-20.png"
+      },
+      {
+        "date": "2025-12-21",
+        "url": "raster-frames/soil-moisture/2025-12-21.png"
+      },
+      {
+        "date": "2025-12-22",
+        "url": "raster-frames/soil-moisture/2025-12-22.png"
+      },
+      {
+        "date": "2025-12-23",
+        "url": "raster-frames/soil-moisture/2025-12-23.png"
+      },
+      {
+        "date": "2025-12-24",
+        "url": "raster-frames/soil-moisture/2025-12-24.png"
+      },
+      {
+        "date": "2025-12-25",
+        "url": "raster-frames/soil-moisture/2025-12-25.png"
+      },
+      {
+        "date": "2025-12-26",
+        "url": "raster-frames/soil-moisture/2025-12-26.png"
+      },
+      {
+        "date": "2025-12-27",
+        "url": "raster-frames/soil-moisture/2025-12-27.png"
+      },
+      {
+        "date": "2025-12-28",
+        "url": "raster-frames/soil-moisture/2025-12-28.png"
+      },
+      {
+        "date": "2025-12-29",
+        "url": "raster-frames/soil-moisture/2025-12-29.png"
+      },
+      {
+        "date": "2025-12-30",
+        "url": "raster-frames/soil-moisture/2025-12-30.png"
+      },
+      {
+        "date": "2025-12-31",
+        "url": "raster-frames/soil-moisture/2025-12-31.png"
+      },
+      {
+        "date": "2026-01-01",
+        "url": "raster-frames/soil-moisture/2026-01-01.png"
+      },
+      {
+        "date": "2026-01-02",
+        "url": "raster-frames/soil-moisture/2026-01-02.png"
+      },
+      {
+        "date": "2026-01-03",
+        "url": "raster-frames/soil-moisture/2026-01-03.png"
+      },
+      {
+        "date": "2026-01-04",
+        "url": "raster-frames/soil-moisture/2026-01-04.png"
+      },
+      {
+        "date": "2026-01-05",
+        "url": "raster-frames/soil-moisture/2026-01-05.png"
+      },
+      {
+        "date": "2026-01-06",
+        "url": "raster-frames/soil-moisture/2026-01-06.png"
+      },
+      {
+        "date": "2026-01-07",
+        "url": "raster-frames/soil-moisture/2026-01-07.png"
+      },
+      {
+        "date": "2026-01-08",
+        "url": "raster-frames/soil-moisture/2026-01-08.png"
+      },
+      {
+        "date": "2026-01-09",
+        "url": "raster-frames/soil-moisture/2026-01-09.png"
+      },
+      {
+        "date": "2026-01-10",
+        "url": "raster-frames/soil-moisture/2026-01-10.png"
+      },
+      {
+        "date": "2026-01-11",
+        "url": "raster-frames/soil-moisture/2026-01-11.png"
+      },
+      {
+        "date": "2026-01-12",
+        "url": "raster-frames/soil-moisture/2026-01-12.png"
+      },
+      {
+        "date": "2026-01-13",
+        "url": "raster-frames/soil-moisture/2026-01-13.png"
+      },
+      {
+        "date": "2026-01-14",
+        "url": "raster-frames/soil-moisture/2026-01-14.png"
+      },
+      {
+        "date": "2026-01-15",
+        "url": "raster-frames/soil-moisture/2026-01-15.png"
+      },
+      {
+        "date": "2026-01-16",
+        "url": "raster-frames/soil-moisture/2026-01-16.png"
+      },
+      {
+        "date": "2026-01-17",
+        "url": "raster-frames/soil-moisture/2026-01-17.png"
+      },
+      {
+        "date": "2026-01-18",
+        "url": "raster-frames/soil-moisture/2026-01-18.png"
+      },
+      {
+        "date": "2026-01-19",
+        "url": "raster-frames/soil-moisture/2026-01-19.png"
+      },
+      {
+        "date": "2026-01-20",
+        "url": "raster-frames/soil-moisture/2026-01-20.png"
+      },
+      {
+        "date": "2026-01-21",
+        "url": "raster-frames/soil-moisture/2026-01-21.png"
+      },
+      {
+        "date": "2026-01-22",
+        "url": "raster-frames/soil-moisture/2026-01-22.png"
+      },
+      {
+        "date": "2026-01-23",
+        "url": "raster-frames/soil-moisture/2026-01-23.png"
+      },
+      {
+        "date": "2026-01-24",
+        "url": "raster-frames/soil-moisture/2026-01-24.png"
+      },
+      {
+        "date": "2026-01-25",
+        "url": "raster-frames/soil-moisture/2026-01-25.png"
+      },
+      {
+        "date": "2026-01-26",
+        "url": "raster-frames/soil-moisture/2026-01-26.png"
+      },
+      {
+        "date": "2026-01-27",
+        "url": "raster-frames/soil-moisture/2026-01-27.png"
+      },
+      {
+        "date": "2026-01-28",
+        "url": "raster-frames/soil-moisture/2026-01-28.png"
+      },
+      {
+        "date": "2026-01-29",
+        "url": "raster-frames/soil-moisture/2026-01-29.png"
+      },
+      {
+        "date": "2026-01-30",
+        "url": "raster-frames/soil-moisture/2026-01-30.png"
+      },
+      {
+        "date": "2026-01-31",
+        "url": "raster-frames/soil-moisture/2026-01-31.png"
+      },
+      {
+        "date": "2026-02-01",
+        "url": "raster-frames/soil-moisture/2026-02-01.png"
+      },
+      {
+        "date": "2026-02-02",
+        "url": "raster-frames/soil-moisture/2026-02-02.png"
+      },
+      {
+        "date": "2026-02-03",
+        "url": "raster-frames/soil-moisture/2026-02-03.png"
+      },
+      {
+        "date": "2026-02-04",
+        "url": "raster-frames/soil-moisture/2026-02-04.png"
+      },
+      {
+        "date": "2026-02-05",
+        "url": "raster-frames/soil-moisture/2026-02-05.png"
+      },
+      {
+        "date": "2026-02-06",
+        "url": "raster-frames/soil-moisture/2026-02-06.png"
+      },
+      {
+        "date": "2026-02-07",
+        "url": "raster-frames/soil-moisture/2026-02-07.png"
+      },
+      {
+        "date": "2026-02-08",
+        "url": "raster-frames/soil-moisture/2026-02-08.png"
+      },
+      {
+        "date": "2026-02-09",
+        "url": "raster-frames/soil-moisture/2026-02-09.png"
+      },
+      {
+        "date": "2026-02-10",
+        "url": "raster-frames/soil-moisture/2026-02-10.png"
+      },
+      {
+        "date": "2026-02-11",
+        "url": "raster-frames/soil-moisture/2026-02-11.png"
+      },
+      {
+        "date": "2026-02-12",
+        "url": "raster-frames/soil-moisture/2026-02-12.png"
+      },
+      {
+        "date": "2026-02-13",
+        "url": "raster-frames/soil-moisture/2026-02-13.png"
+      },
+      {
+        "date": "2026-02-14",
+        "url": "raster-frames/soil-moisture/2026-02-14.png"
+      },
+      {
+        "date": "2026-02-15",
+        "url": "raster-frames/soil-moisture/2026-02-15.png"
+      }
+    ]
+  },
+  "precipitation": {
+    "bounds": [
+      -9.6,
+      36.9,
+      -6.1,
+      42.2
+    ],
+    "frames": [
+      {
+        "date": "2025-12-01",
+        "url": "raster-frames/precipitation/2025-12-01.png"
+      },
+      {
+        "date": "2025-12-02",
+        "url": "raster-frames/precipitation/2025-12-02.png"
+      },
+      {
+        "date": "2025-12-03",
+        "url": "raster-frames/precipitation/2025-12-03.png"
+      },
+      {
+        "date": "2025-12-04",
+        "url": "raster-frames/precipitation/2025-12-04.png"
+      },
+      {
+        "date": "2025-12-05",
+        "url": "raster-frames/precipitation/2025-12-05.png"
+      },
+      {
+        "date": "2025-12-06",
+        "url": "raster-frames/precipitation/2025-12-06.png"
+      },
+      {
+        "date": "2025-12-07",
+        "url": "raster-frames/precipitation/2025-12-07.png"
+      },
+      {
+        "date": "2025-12-08",
+        "url": "raster-frames/precipitation/2025-12-08.png"
+      },
+      {
+        "date": "2025-12-09",
+        "url": "raster-frames/precipitation/2025-12-09.png"
+      },
+      {
+        "date": "2025-12-10",
+        "url": "raster-frames/precipitation/2025-12-10.png"
+      },
+      {
+        "date": "2025-12-11",
+        "url": "raster-frames/precipitation/2025-12-11.png"
+      },
+      {
+        "date": "2025-12-12",
+        "url": "raster-frames/precipitation/2025-12-12.png"
+      },
+      {
+        "date": "2025-12-13",
+        "url": "raster-frames/precipitation/2025-12-13.png"
+      },
+      {
+        "date": "2025-12-14",
+        "url": "raster-frames/precipitation/2025-12-14.png"
+      },
+      {
+        "date": "2025-12-15",
+        "url": "raster-frames/precipitation/2025-12-15.png"
+      },
+      {
+        "date": "2025-12-16",
+        "url": "raster-frames/precipitation/2025-12-16.png"
+      },
+      {
+        "date": "2025-12-17",
+        "url": "raster-frames/precipitation/2025-12-17.png"
+      },
+      {
+        "date": "2025-12-18",
+        "url": "raster-frames/precipitation/2025-12-18.png"
+      },
+      {
+        "date": "2025-12-19",
+        "url": "raster-frames/precipitation/2025-12-19.png"
+      },
+      {
+        "date": "2025-12-20",
+        "url": "raster-frames/precipitation/2025-12-20.png"
+      },
+      {
+        "date": "2025-12-21",
+        "url": "raster-frames/precipitation/2025-12-21.png"
+      },
+      {
+        "date": "2025-12-22",
+        "url": "raster-frames/precipitation/2025-12-22.png"
+      },
+      {
+        "date": "2025-12-23",
+        "url": "raster-frames/precipitation/2025-12-23.png"
+      },
+      {
+        "date": "2025-12-24",
+        "url": "raster-frames/precipitation/2025-12-24.png"
+      },
+      {
+        "date": "2025-12-25",
+        "url": "raster-frames/precipitation/2025-12-25.png"
+      },
+      {
+        "date": "2025-12-26",
+        "url": "raster-frames/precipitation/2025-12-26.png"
+      },
+      {
+        "date": "2025-12-27",
+        "url": "raster-frames/precipitation/2025-12-27.png"
+      },
+      {
+        "date": "2025-12-28",
+        "url": "raster-frames/precipitation/2025-12-28.png"
+      },
+      {
+        "date": "2025-12-29",
+        "url": "raster-frames/precipitation/2025-12-29.png"
+      },
+      {
+        "date": "2025-12-30",
+        "url": "raster-frames/precipitation/2025-12-30.png"
+      },
+      {
+        "date": "2025-12-31",
+        "url": "raster-frames/precipitation/2025-12-31.png"
+      },
+      {
+        "date": "2026-01-01",
+        "url": "raster-frames/precipitation/2026-01-01.png"
+      },
+      {
+        "date": "2026-01-02",
+        "url": "raster-frames/precipitation/2026-01-02.png"
+      },
+      {
+        "date": "2026-01-03",
+        "url": "raster-frames/precipitation/2026-01-03.png"
+      },
+      {
+        "date": "2026-01-04",
+        "url": "raster-frames/precipitation/2026-01-04.png"
+      },
+      {
+        "date": "2026-01-05",
+        "url": "raster-frames/precipitation/2026-01-05.png"
+      },
+      {
+        "date": "2026-01-06",
+        "url": "raster-frames/precipitation/2026-01-06.png"
+      },
+      {
+        "date": "2026-01-07",
+        "url": "raster-frames/precipitation/2026-01-07.png"
+      },
+      {
+        "date": "2026-01-08",
+        "url": "raster-frames/precipitation/2026-01-08.png"
+      },
+      {
+        "date": "2026-01-09",
+        "url": "raster-frames/precipitation/2026-01-09.png"
+      },
+      {
+        "date": "2026-01-10",
+        "url": "raster-frames/precipitation/2026-01-10.png"
+      },
+      {
+        "date": "2026-01-11",
+        "url": "raster-frames/precipitation/2026-01-11.png"
+      },
+      {
+        "date": "2026-01-12",
+        "url": "raster-frames/precipitation/2026-01-12.png"
+      },
+      {
+        "date": "2026-01-13",
+        "url": "raster-frames/precipitation/2026-01-13.png"
+      },
+      {
+        "date": "2026-01-14",
+        "url": "raster-frames/precipitation/2026-01-14.png"
+      },
+      {
+        "date": "2026-01-15",
+        "url": "raster-frames/precipitation/2026-01-15.png"
+      },
+      {
+        "date": "2026-01-16",
+        "url": "raster-frames/precipitation/2026-01-16.png"
+      },
+      {
+        "date": "2026-01-17",
+        "url": "raster-frames/precipitation/2026-01-17.png"
+      },
+      {
+        "date": "2026-01-18",
+        "url": "raster-frames/precipitation/2026-01-18.png"
+      },
+      {
+        "date": "2026-01-19",
+        "url": "raster-frames/precipitation/2026-01-19.png"
+      },
+      {
+        "date": "2026-01-20",
+        "url": "raster-frames/precipitation/2026-01-20.png"
+      },
+      {
+        "date": "2026-01-21",
+        "url": "raster-frames/precipitation/2026-01-21.png"
+      },
+      {
+        "date": "2026-01-22",
+        "url": "raster-frames/precipitation/2026-01-22.png"
+      },
+      {
+        "date": "2026-01-23",
+        "url": "raster-frames/precipitation/2026-01-23.png"
+      },
+      {
+        "date": "2026-01-24",
+        "url": "raster-frames/precipitation/2026-01-24.png"
+      },
+      {
+        "date": "2026-01-25",
+        "url": "raster-frames/precipitation/2026-01-25.png"
+      },
+      {
+        "date": "2026-01-26",
+        "url": "raster-frames/precipitation/2026-01-26.png"
+      },
+      {
+        "date": "2026-01-27",
+        "url": "raster-frames/precipitation/2026-01-27.png"
+      },
+      {
+        "date": "2026-01-28",
+        "url": "raster-frames/precipitation/2026-01-28.png"
+      },
+      {
+        "date": "2026-01-29",
+        "url": "raster-frames/precipitation/2026-01-29.png"
+      },
+      {
+        "date": "2026-01-30",
+        "url": "raster-frames/precipitation/2026-01-30.png"
+      },
+      {
+        "date": "2026-01-31",
+        "url": "raster-frames/precipitation/2026-01-31.png"
+      },
+      {
+        "date": "2026-02-01",
+        "url": "raster-frames/precipitation/2026-02-01.png"
+      },
+      {
+        "date": "2026-02-02",
+        "url": "raster-frames/precipitation/2026-02-02.png"
+      },
+      {
+        "date": "2026-02-03",
+        "url": "raster-frames/precipitation/2026-02-03.png"
+      },
+      {
+        "date": "2026-02-04",
+        "url": "raster-frames/precipitation/2026-02-04.png"
+      },
+      {
+        "date": "2026-02-05",
+        "url": "raster-frames/precipitation/2026-02-05.png"
+      },
+      {
+        "date": "2026-02-06",
+        "url": "raster-frames/precipitation/2026-02-06.png"
+      },
+      {
+        "date": "2026-02-07",
+        "url": "raster-frames/precipitation/2026-02-07.png"
+      },
+      {
+        "date": "2026-02-08",
+        "url": "raster-frames/precipitation/2026-02-08.png"
+      },
+      {
+        "date": "2026-02-09",
+        "url": "raster-frames/precipitation/2026-02-09.png"
+      },
+      {
+        "date": "2026-02-10",
+        "url": "raster-frames/precipitation/2026-02-10.png"
+      },
+      {
+        "date": "2026-02-11",
+        "url": "raster-frames/precipitation/2026-02-11.png"
+      },
+      {
+        "date": "2026-02-12",
+        "url": "raster-frames/precipitation/2026-02-12.png"
+      },
+      {
+        "date": "2026-02-13",
+        "url": "raster-frames/precipitation/2026-02-13.png"
+      },
+      {
+        "date": "2026-02-14",
+        "url": "raster-frames/precipitation/2026-02-14.png"
+      },
+      {
+        "date": "2026-02-15",
+        "url": "raster-frames/precipitation/2026-02-15.png"
+      }
+    ]
+  },
+  "cog": {
+    "soil_moisture_dir": "cog/soil-moisture/",
+    "precipitation_dir": "cog/precipitation/",
+    "crs": "EPSG:4326",
+    "note": "COGs for titiler dynamic rendering"
+  }
+}

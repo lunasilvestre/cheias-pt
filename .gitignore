@@ -25,3 +25,10 @@ Thumbs.db
 # Environment
 .env
 .env.local
+
+# Data files (too large for git, regenerable from notebooks/pipelines)
+data/flood-extent/*.geojson
+data/flood-extent/*.pmtiles
+data/flood-extent/*.parquet
+data/flood-extent/EMSR*/
+data/cache/
