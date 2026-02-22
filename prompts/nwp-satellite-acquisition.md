@@ -119,27 +119,37 @@ No public API. No historical archive. Options in priority order:
 
 ## Spawn Plan
 
-Spawn 4 teammates:
+Spawn 7 teammates (one per independent data source — maximum parallelism). All use **Opus**.
 
-- **Teammate 1 — ERA5/ECMWF:** Handle both Path A (CDS API) and Path B (Open Data archive). This is the highest-value acquisition — MSLP + wind fields enable isobar contours, wind barbs, streamlines, and gust maps. Start with a small test request (single day) to verify the pipeline before fetching the full 77-day range. Use the virtual environment at `.venv/`.
+- **Teammate 1 — ERA5 CDS API:** Path A — acquire MSLP, 10m wind (u+v), wind gusts, and precip rate via the CDS API (`reanalysis-era5-single-levels`). Check `~/.cdsapirc` for credentials. Start with a single-day test request (Jan 28) to verify the pipeline before fetching the full 77-day range. Hourly for Jan 26-30, 6-hourly for the rest. Process GRIB2/NetCDF → EPSG:4326 COG. Use the virtual environment at `.venv/`.
 
-- **Teammate 2 — NWP Archives (ICON-EU + ARPEGE):** Investigate DWD and Météo-France archive availability for Jan 2026 data. If expired, document the real-time ingestion pipeline for future use. Check DWD CDC for any reanalysis alternative. Write the fetch scripts even if data is currently unavailable — they'll be needed when cheias.pt transitions to monitoring mode.
+- **Teammate 2 — ECMWF Open Data:** Path B — check `https://data.ecmwf.int/forecasts/` for archived HRES 0.1° data from Jan 2026. If available, download the runs initialized Jan 26 12Z and Jan 27 00Z (the forecasts WXCharts was showing). HRES is higher resolution than ERA5 — if it works, it supplements Teammate 1's output. If expired, document the pipeline for future real-time ingestion and report back immediately. Use `.venv/`.
 
-- **Teammate 3 — Satellite + Lightning (EUMETSAT + Blitzortung):** Handle EUMETSAT Data Store registration/auth and Blitzortung data access. The satellite reprojection from geostationary is the hardest technical challenge — use `satpy` if available or `rioxarray` with manual CRS definition. For lightning, try all available paths.
+- **Teammate 3 — DWD ICON-EU:** Investigate DWD open data archive for ICON-EU `VMAX_10M` (10m peak gust) from Jan 26-30. DWD purges after ~2 weeks so likely gone. Check DWD Climate Data Center (CDC) for reanalysis alternatives at `https://opendata.dwd.de/climate_environment/`. Write `scripts/fetch_icon_eu.py` either way — it's needed for monitoring mode. ERA5 gusts from Teammate 1 are the fallback. Use `.venv/`.
 
-- **Teammate 4 — Radar (IPMA/OPERA/RainViewer):** Investigate all radar data access paths. This is the most uncertain — expect dead ends. Document what works and what doesn't. If OPERA historical composites are accessible, that's the win.
+- **Teammate 4 — Météo-France ARPEGE:** Check `https://donneespubliques.meteofrance.fr/` for archived Jan 2026 GRIB2 files (MSLP + 10m wind). If expired, document the pipeline and write `scripts/fetch_arpege.py` for future use. Report availability status quickly — if dead end, wrap up and let the lead know. Use `.venv/`.
 
-Have teammates share findings with each other — especially Teammate 1 sharing ERA5 wind gust results with Teammate 2 (since ERA5 is the ICON-EU fallback). The lead should produce:
+- **Teammate 5 — EUMETSAT Meteosat:** Acquire MSG Natural Colour RGB and IR 10.8μm from the EUMETSAT Data Store for Jan 27-28 (storm approach + landfall). Check for credentials in `~/.eumetsat/` or env vars. The geostationary → EPSG:4326 reprojection is the hardest challenge — use `satpy` if installed, otherwise `rioxarray`. Crop to North Atlantic domain. Each frame → COG. Use `.venv/`.
 
-1. A status report: what was acquired, what's missing, what's the fallback
-2. All fetch scripts in `scripts/`
-3. All COGs in `data/cog/` following naming conventions
-4. An updated data inventory section for `CLAUDE.md`
+- **Teammate 6 — Blitzortung Lightning:** Investigate all lightning data paths for Jan 27-28 over Iberia: (1) Blitzortung Data Access Program, (2) LightningMaps.org archive, (3) EUCLID via EUMETNET, (4) Windy API historical data. Output GeoJSON points with `timestamp`, `lat`, `lon`, `amplitude`. Convert to PMTiles if data obtained. Use `.venv/`.
 
-**File ownership:** Each teammate owns their output directories. No file conflicts.
+- **Teammate 7 — Radar (OPERA/RainViewer/IPMA):** Investigate all radar data access paths in priority order: (1) OPERA/EUMETNET historical composites, (2) RainViewer API archived tiles for Jan 28, (3) IPMA current radar scraping pipeline for future use. This is the most uncertain — expect dead ends. Document what works and what doesn't. Use `.venv/`.
+
+**Coordination:**
+
+- Teammate 2 should report ECMWF Open Data availability quickly — if available, it supplements Teammate 1's ERA5 output.
+- Teammate 3 depends on Teammate 1's ERA5 wind gust results as fallback — if ICON-EU is unavailable, ERA5 gusts are the replacement.
+- The lead should produce:
+  1. A status report: what was acquired, what's missing, what's the fallback
+  2. All fetch scripts in `scripts/`
+  3. All COGs in `data/cog/` following naming conventions
+  4. An updated data inventory section for `CLAUDE.md`
+
+**File ownership (no conflicts — each teammate owns their directories):**
 - Teammate 1: `data/cog/mslp/`, `data/cog/wind-u/`, `data/cog/wind-v/`, `data/cog/wind-gust/`, `scripts/fetch_era5_synoptic.py`
-- Teammate 2: `data/cog/wind-gust-icon/`, `data/cog/arpege/`, `scripts/fetch_icon_eu.py`, `scripts/fetch_arpege.py`
-- Teammate 3: `data/cog/satellite-vis/`, `data/cog/satellite-ir/`, `data/lightning/`, `scripts/fetch_eumetsat.py`, `scripts/fetch_lightning.py`
-- Teammate 4: `data/radar/`, `scripts/fetch_radar.py`
-
-Use Sonnet for the teammates.
+- Teammate 2: `data/cog/ecmwf-hres/`, `scripts/fetch_ecmwf_opendata.py`
+- Teammate 3: `data/cog/wind-gust-icon/`, `scripts/fetch_icon_eu.py`
+- Teammate 4: `data/cog/arpege/`, `scripts/fetch_arpege.py`
+- Teammate 5: `data/cog/satellite-vis/`, `data/cog/satellite-ir/`, `scripts/fetch_eumetsat.py`
+- Teammate 6: `data/lightning/`, `data/qgis/lightning-kristin.geojson`, `scripts/fetch_lightning.py`
+- Teammate 7: `data/radar/`, `scripts/fetch_radar.py`
