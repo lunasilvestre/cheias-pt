@@ -81,12 +81,22 @@ Similar to ICON-EU — operational archives may have expired.
 
 Satellite imagery for Storm Kristin's approach and landfall. The Data Store has full archives — no expiry.
 
-- Register at https://data.eumetsat.int (check for existing credentials in `~/.eumetsat/` or env vars)
+- **Auth:** Credentials are in `.env` as `EUMETSAT_CONSUMER_KEY` and `EUMETSAT_CONSUMER_SECRET`. Use OAuth2 client credentials flow to get a bearer token:
+
+  ```bash
+  curl -d "grant_type=client_credentials" \
+    -H "Authorization: Basic $(echo -n $EUMETSAT_CONSUMER_KEY:$EUMETSAT_CONSUMER_SECRET | base64)" \
+    https://api.eumetsat.int/token
+  ```
+
+  Token expires after 1 hour — refresh as needed. Use `eumdac` Python library if available (handles token refresh automatically).
+- **Licences active:** Meteosat >1hr latency (perpetual, any purpose) + Meteosat <1hr latency (Personal/Education/Research, expires Feb 2029) + Copernicus + Third-Party.
 - Products needed:
   - MSG Natural Colour RGB composite — Jan 27-28, 2026, every 15 min (or hourly at minimum)
   - MSG IR 10.8μm channel — same timestamps (for nighttime storm tracking)
-- Processing: The tricky part is **geostationary projection** → EPSG:4326. Use `rioxarray` or `satpy` for reprojection. Crop to North Atlantic domain.
+- Processing: The tricky part is **geostationary projection** → EPSG:4326. Use `satpy` if installed (preferred — handles MSG native format), otherwise `rioxarray` with manual CRS definition. Crop to North Atlantic domain.
 - Each frame → COG
+- **Attribution (required by licence):** `"Contains modified EUMETSAT Meteosat data 2026"`
 
 **Output:** `data/cog/satellite-vis/` and `data/cog/satellite-ir/`
 **Script:** `scripts/fetch_eumetsat.py`
@@ -129,7 +139,7 @@ Spawn 7 teammates (one per independent data source — maximum parallelism). All
 
 - **Teammate 4 — Météo-France ARPEGE:** Check `https://donneespubliques.meteofrance.fr/` for archived Jan 2026 GRIB2 files (MSLP + 10m wind). If expired, document the pipeline and write `scripts/fetch_arpege.py` for future use. Report availability status quickly — if dead end, wrap up and let the lead know. Use `.venv/`.
 
-- **Teammate 5 — EUMETSAT Meteosat:** Acquire MSG Natural Colour RGB and IR 10.8μm from the EUMETSAT Data Store for Jan 27-28 (storm approach + landfall). Check for credentials in `~/.eumetsat/` or env vars. The geostationary → EPSG:4326 reprojection is the hardest challenge — use `satpy` if installed, otherwise `rioxarray`. Crop to North Atlantic domain. Each frame → COG. Use `.venv/`.
+- **Teammate 5 — EUMETSAT Meteosat:** Acquire MSG Natural Colour RGB and IR 10.8μm from the EUMETSAT Data Store for Jan 27-28 (storm approach + landfall). Credentials are in `.env` (`EUMETSAT_CONSUMER_KEY` + `EUMETSAT_CONSUMER_SECRET`) — use OAuth2 client credentials flow via `eumdac` or direct token endpoint. All 4 licences are active. The geostationary → EPSG:4326 reprojection is the hardest challenge — use `satpy` if installed, otherwise `rioxarray`. Crop to North Atlantic domain. Each frame → COG. Attribution required: `"Contains modified EUMETSAT Meteosat data 2026"`. Use `.venv/`.
 
 - **Teammate 6 — Blitzortung Lightning:** Investigate all lightning data paths for Jan 27-28 over Iberia: (1) Blitzortung Data Access Program, (2) LightningMaps.org archive, (3) EUCLID via EUMETNET, (4) Windy API historical data. Output GeoJSON points with `timestamp`, `lat`, `lon`, `amplitude`. Convert to PMTiles if data obtained. Use `.venv/`.
 
