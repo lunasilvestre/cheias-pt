@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>cheias.pt — O Inverno Que Partiu os Rios</title>
+  <meta name="description" content="Como três tempestades expuseram a fragilidade de Portugal. Uma história contada com dados de satélite e modelos hidrológicos.">
+  <meta property="og:title" content="cheias.pt — O Inverno Que Partiu os Rios">
+  <meta property="og:description" content="Como três tempestades expuseram a fragilidade de Portugal. Uma história contada com dados de satélite e modelos hidrológicos.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://cheias.pt">
+  <meta property="og:image" content="https://cheias.pt/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="pt_PT">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="cheias.pt — O Inverno Que Partiu os Rios">
+  <meta name="twitter:description" content="Como três tempestades expuseram a fragilidade de Portugal.">
+  <meta name="twitter:image" content="https://cheias.pt/assets/og-image.png">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌊</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/pmtiles@4.1.0/dist/pmtiles.js"></script>
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Fixed map background -->
+  <div id="map-container"></div>
+
+  <!-- Progress bar -->
+  <div id="progress-bar">
+    <div id="progress-indicator"></div>
+  </div>
+
+  <!-- Shared temporal date label (visible during animated chapters) -->
+  <div id="temporal-date-label" class="temporal-label"></div>
+
+  <!-- Scrolling story container -->
+  <div id="story">
+
+    <!-- Chapter 0: Title Screen -->
+    <section data-chapter="chapter-0" class="chapter chapter--fully chapter--hero">
+      <div class="chapter__content">
+        <h1 class="hero__title">O Inverno Que Partiu os Rios</h1>
+        <p class="hero__subtitle">Como três tempestades expuseram a fragilidade de Portugal</p>
+        <p class="hero__byline">cheias.pt · Uma história contada com dados de satélite e modelos hidrológicos</p>
+        <div class="hero__scroll-hint">
+          <span class="scroll-hint__arrow"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chapter 1: The Hook -->
+    <section data-chapter="chapter-1" class="chapter chapter--left">
+      <div class="chapter__content">
+        <div class="chapter__card">
+          <h2 class="chapter__title">7 de Fevereiro de 2026</h2>
+          <p class="chapter__text">O satélite Sentinel-1 capturou esta imagem. O vermelho é água onde antes havia terra. O Tejo atingiu o nível mais alto desde 1997. 11 pessoas morreram. 69 municípios declararam calamidade.</p>
+          <div class="chapter__legend">
+            <div class="legend-item">
+              <span class="legend-swatch" style="background: #e74c3c;"></span>
+              <span class="legend-label">Área inundada</span>
+            </div>
+          </div>
+          <p class="chapter__source">Dados: Copernicus Sentinel-1 / CEMS Rapid Mapping (EMSR864)</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chapter 2: The Atlantic Engine -->
+    <section data-chapter="chapter-2" class="chapter chapter--right">
+      <div class="chapter__content">
+        <div class="chapter__card">
+          <h2 class="chapter__title">A Energia do Atlântico</h2>
+          <p class="chapter__text">O inverno de 2025-26 trouxe uma energia incomum ao Atlântico Norte. Temperaturas da superfície do mar acima da média alimentaram uma sequência de tempestades: Harry, Ingrid, Joseph, Kristin, Leonardo, Marta. Cada uma carregou mais humidade do que a anterior — humidade que viajou milhares de quilómetros até embater na costa portuguesa.</p>
+          <div class="chapter__moisture-arrow">
+            <svg viewBox="0 0 360 80" xmlns="http://www.w3.org/2000/svg" aria-label="Fluxo de humidade do Atlântico para Portugal">
+              <defs>
+                <linearGradient id="moisture-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#2166ac" stop-opacity="0.2"/>
+                  <stop offset="40%" stop-color="#3498db" stop-opacity="0.6"/>
+                  <stop offset="100%" stop-color="#e74c3c" stop-opacity="0.9"/>
+                </linearGradient>
+              </defs>
+              <path d="M 20 40 C 100 20, 200 60, 310 40" stroke="url(#moisture-grad)" stroke-width="6" fill="none" stroke-linecap="round"/>
+              <polygon points="320,40 305,30 305,50" fill="#e74c3c" opacity="0.9"/>
+              <text x="20" y="72" fill="#607080" font-size="10" font-family="Inter, sans-serif">Atlântico</text>
+              <text x="300" y="72" fill="#607080" font-size="10" font-family="Inter, sans-serif">Portugal</text>
+            </svg>
+          </div>
+          <p class="chapter__dev-note">Visualização de dados atmosféricos em desenvolvimento</p>
+          <p class="chapter__source">Dados: NOAA SST Anomalies / ERA5 Reanalysis</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chapter 3: The Sponge Fills -->
+    <section data-chapter="chapter-3" class="chapter chapter--left">
+      <div class="chapter__content">
+        <div class="chapter__card">
+          <h2 class="chapter__title">O Solo Encharca</h2>
+          <p id="ch3-date-label" class="chapter__date-label"></p>
+          <p class="chapter__text">Antes de qualquer tempestade, o solo já estava a encher. Semanas de chuva persistente saturaram os primeiros 30 centímetros de terra — a camada que absorve a chuva e impede cheias. Quando Kristin chegou em Janeiro, o solo já não tinha para onde mandar a água. Cada gota adicional ia directamente para os rios.</p>
+          <div class="chapter__legend">
+            <div class="legend-item">
+              <span class="legend-swatch" style="background: #a6611a;"></span>
+              <span class="legend-label">Solo seco</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-swatch" style="background: #018571;"></span>
+              <span class="legend-label">Solo saturado</span>
+            </div>
+          </div>
+          <p class="chapter__source">Dados: Open-Meteo / ERA5-Land Soil Moisture (0-30cm)</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chapter 4: Three Storms -->
+    <section data-chapter="chapter-4" class="chapter chapter--right">
+      <div class="chapter__content">
+        <div class="chapter__card">
+          <h2 class="chapter__title">Três Tempestades em Duas Semanas</h2>
+          <p class="chapter__text">Kristin atingiu a costa a 29 de Janeiro com ventos de força de furacão — possivelmente a tempestade mais forte desde que há registos. Antes que os rios baixassem, Leonardo chegou a 6 de Fevereiro, despejando o equivalente a três dias de chuva em 24 horas. Marta seguiu-se dias depois. Na zona de Grazalema, em Espanha, caíram mais de 500mm num único dia.</p>
+          <p class="chapter__source">Dados: Open-Meteo / ERA5 Precipitation / IPMA</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chapter 5: The Rivers Rise -->
+    <section data-chapter="chapter-5" class="chapter chapter--left">
+      <div class="chapter__content">
+        <div class="chapter__card">
+          <h2 class="chapter__title">Os Rios Respondem</h2>
+          <p class="chapter__text">O Tejo. O Mondego. O Sado. Cada rio carrega a história do seu território — a chuva que caiu, o solo que não absorveu, as descargas das barragens espanholas a montante. O caudal do Tejo atingiu o nível mais alto em quase 30 anos. O Sado voltou a valores de 1989. Em Coimbra, o dique do Mondego cedeu.</p>
+          <p class="chapter__source">Dados: GloFAS / Open-Meteo Flood API</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chapter 6: The Human Cost -->
+    <!-- 6a: Alcácer do Sal -->
+    <section data-chapter="chapter-6a" class="chapter chapter--left">
+      <div class="chapter__content">
+        <div class="chapter__card">
+          <h2 class="chapter__title">Alcácer do Sal</h2>
+          <p class="chapter__text">A água do Sado subiu dois metros no centro da vila. Moradores descreveram uma calamidade que não viam há 30 anos.</p>
+          <p class="chapter__source">Dados: CEMS Rapid Mapping (EMSR861, EMSR864)</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6b: Coimbra -->
+    <section data-chapter="chapter-6b" class="chapter chapter--right">
+      <div class="chapter__content">
+        <div class="chapter__card">
+          <h2 class="chapter__title">Coimbra</h2>
+          <p class="chapter__text">O dique do Mondego cedeu em Casais. 3.000 pessoas evacuadas numa noite. Campos agrícolas submersos em todas as direcções.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6c: A Autoestrada -->
+    <section data-chapter="chapter-6c" class="chapter chapter--left">
+      <div class="chapter__content">
+        <div class="chapter__card">
+          <h2 class="chapter__title">A Autoestrada</h2>
+          <p class="chapter__text">A principal auto-estrada do país colapsou perto de Coimbra. A artéria Norte-Sul de Portugal, cortada.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chapter 7: The Full Picture -->
+    <section data-chapter="chapter-7" class="chapter chapter--fully">
+      <div class="chapter__content">
+        <div class="chapter__card chapter__card--centered">
+          <h2 class="chapter__title">A Cadeia Causal</h2>
+          <p class="chapter__text">Solo saturado. Chuva intensa. Rios que ultrapassaram os limites. E por baixo de tudo, incêndios do verão anterior que tinham arrancado a vegetação que segurava as encostas. Cada peça sozinha era gerível. Juntas, criaram uma catástrofe.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chapter 8: What the Data Knew -->
+    <section data-chapter="chapter-8" class="chapter chapter--left">
+      <div class="chapter__content">
+        <div class="chapter__card">
+          <h2 class="chapter__title">O Que os Dados Já Sabiam</h2>
+          <p class="chapter__text">O índice de pré-condição de cheia combina três sinais: humidade do solo, precipitação prevista, e caudal nos rios. Duas semanas antes de Kristin, este índice mostrava grande parte de Portugal centro e sul em condições de risco elevado. Portugal não tem um sistema nacional de previsão de cheias. O SVARH observa, mas não prevê. O EFAS europeu tem capacidade degradada para rios portugueses regulados por barragens. Uma plataforma aberta, baseada em dados públicos, poderia ter dado mais tempo para preparar.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chapter 9: Explore -->
+    <section data-chapter="chapter-9" class="chapter chapter--fully chapter--explore">
+      <div class="chapter__content">
+        <div class="chapter__card chapter__card--centered">
+          <h2 class="chapter__title">Explorar os Dados</h2>
+          <p class="chapter__text">Os dados por detrás desta história são públicos e abertos. Explore o mapa, clique nas bacias hidrográficas, veja os dados para a sua zona.</p>
+          <div class="chapter__cta">
+            <button class="cta-button" data-action="geolocate">Ver a minha zona</button>
+            <button class="cta-button cta-button--secondary" data-action="methodology">Metodologia</button>
+            <button class="cta-button cta-button--secondary" data-action="share">Partilhar</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Exploration mode controls (hidden until chapter 9) -->
+  <div id="exploration-controls">
+    <div class="explore-panel">
+      <h3 class="explore-panel__title">Camadas</h3>
+      <label class="explore-toggle">
+        <input type="checkbox" data-layer="flood-extent" checked>
+        <span class="explore-toggle__swatch" style="background: #e74c3c;"></span>
+        <span class="explore-toggle__label">Área inundada</span>
+      </label>
+      <label class="explore-toggle">
+        <input type="checkbox" data-layer="soil-moisture">
+        <span class="explore-toggle__swatch" style="background: #2166ac;"></span>
+        <span class="explore-toggle__label">Humidade do solo (pico)</span>
+      </label>
+      <label class="explore-toggle">
+        <input type="checkbox" data-layer="precipitation">
+        <span class="explore-toggle__swatch" style="background: #F7991F;"></span>
+        <span class="explore-toggle__label">Precipitação (total)</span>
+      </label>
+      <label class="explore-toggle">
+        <input type="checkbox" data-layer="discharge">
+        <span class="explore-toggle__swatch" style="background: #3498db;"></span>
+        <span class="explore-toggle__label">Estações de caudal</span>
+      </label>
+      <label class="explore-toggle">
+        <input type="checkbox" data-layer="precondition">
+        <span class="explore-toggle__swatch" style="background: #b2182b;"></span>
+        <span class="explore-toggle__label">Índice de pré-condição</span>
+      </label>
+      <label class="explore-toggle">
+        <input type="checkbox" data-layer="basins" checked>
+        <span class="explore-toggle__swatch" style="background: #3498db; opacity: 0.5;"></span>
+        <span class="explore-toggle__label">Bacias hidrográficas</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Dynamic legend (updates per chapter) -->
+  <div id="dynamic-legend"></div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

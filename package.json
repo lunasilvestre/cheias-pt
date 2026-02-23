@@ -1,0 +1,10 @@
+{
+  "name": "cheias-pt",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve -l 3000 -s --no-clipboard",
+    "serve": "bash scripts/serve.sh"
+  }
+}

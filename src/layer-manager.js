@@ -31,38 +31,50 @@ const LAYER_DEFS = {
   },
   // Dynamic layers — source data set programmatically after fetch
   'soil-moisture-animation': {
-    type: 'circle',
+    type: 'heatmap',
     source: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
     paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, 4, 9, 10],
-      'circle-color': [
-        'interpolate', ['linear'], ['get', 'value'],
-        0, '#f7f7f7',
-        0.5, '#67a9cf',
-        1.0, '#2166ac',
+      'heatmap-weight': ['get', 'value'],
+      'heatmap-intensity': 1,
+      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 5, 35, 7, 60, 9, 90],
+      'heatmap-color': [
+        'interpolate', ['linear'], ['heatmap-density'],
+        0,    'rgba(0,0,0,0)',
+        0.1,  '#a6611a',
+        0.3,  '#dfc27d',
+        0.5,  '#f5f5f5',
+        0.7,  '#80cdc1',
+        0.9,  '#018571',
+        1.0,  '#003c30',
       ],
-      'circle-opacity': 0,
-      'circle-stroke-width': 0,
+      'heatmap-opacity': 0,
     },
   },
   'precipitation-accumulation': {
-    type: 'circle',
+    type: 'heatmap',
     source: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
     paint: {
-      'circle-radius': [
-        'interpolate', ['linear'], ['get', 'total_mm'],
-        0, 3, 100, 6, 250, 10, 500, 16,
+      'heatmap-weight': [
+        'interpolate', ['linear'], ['get', 'value'],
+        0, 0,
+        10, 0.3,
+        25, 0.6,
+        50, 0.9,
+        65, 1.0,
       ],
-      'circle-color': [
-        'step', ['get', 'total_mm'],
-        '#2166ac', 50,
-        '#f7f7b5', 100,
-        '#F7991F', 250,
-        '#e74c3c',
+      'heatmap-intensity': 1.2,
+      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 5, 35, 7, 60, 9, 90],
+      'heatmap-color': [
+        'interpolate', ['linear'], ['heatmap-density'],
+        0,    'rgba(0,0,0,0)',
+        0.15, '#ffffb2',
+        0.3,  '#fecc5c',
+        0.5,  '#fd8d3c',
+        0.7,  '#f03b20',
+        0.9,  '#bd0026',
+        1.0,  '#800026',
       ],
-      'circle-opacity': 0,
-      'circle-stroke-width': 0.5,
-      'circle-stroke-color': 'rgba(255,255,255,0.2)',
+      'heatmap-opacity': 0,
     },
   },
   'glofas-discharge': {
@@ -71,7 +83,7 @@ const LAYER_DEFS = {
     paint: {
       'circle-radius': [
         'interpolate', ['linear'], ['get', 'discharge_ratio'],
-        1, 6, 5, 14, 10, 22,
+        1, 10, 5, 22, 10, 34,
       ],
       'circle-color': [
         'step', ['get', 'discharge_ratio'],
@@ -85,18 +97,41 @@ const LAYER_DEFS = {
     },
   },
   'soil-moisture-snapshot': {
-    type: 'circle',
+    type: 'heatmap',
     source: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
     paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, 4, 9, 10],
-      'circle-color': [
-        'interpolate', ['linear'], ['get', 'value'],
-        0, '#f7f7f7',
-        0.5, '#67a9cf',
-        1.0, '#2166ac',
+      'heatmap-weight': ['get', 'value'],
+      'heatmap-intensity': 1,
+      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 5, 35, 7, 60, 9, 90],
+      'heatmap-color': [
+        'interpolate', ['linear'], ['heatmap-density'],
+        0,    'rgba(0,0,0,0)',
+        0.1,  '#a6611a',
+        0.3,  '#dfc27d',
+        0.5,  '#f5f5f5',
+        0.7,  '#80cdc1',
+        0.9,  '#018571',
+        1.0,  '#003c30',
       ],
-      'circle-opacity': 0,
-      'circle-stroke-width': 0,
+      'heatmap-opacity': 0,
+    },
+  },
+  'river-labels': {
+    type: 'symbol',
+    source: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
+    layout: {
+      'text-field': ['get', 'basin'],
+      'text-size': 14,
+      'text-font': ['Open Sans Regular'],
+      'text-offset': [0, 1.5],
+      'text-anchor': 'top',
+      'text-allow-overlap': true,
+    },
+    paint: {
+      'text-color': '#ffffff',
+      'text-opacity': 0,
+      'text-halo-color': 'rgba(10, 33, 46, 0.8)',
+      'text-halo-width': 1.5,
     },
   },
   // --- PMTiles flood extent layers ---
@@ -141,6 +176,48 @@ const LAYER_DEFS = {
     },
   },
 
+  // --- Pre-rendered raster image sources (scroll-driven narrative chapters) ---
+  'soil-moisture-raster': {
+    type: 'raster',
+    imageSource: true,
+    bounds: [-9.6, 36.9, -6.1, 42.2],
+    initialUrl: 'data/raster-frames/soil-moisture/2025-12-01.png',
+    paint: { 'raster-opacity': 0, 'raster-fade-duration': 0 },
+  },
+  'precipitation-raster': {
+    type: 'raster',
+    imageSource: true,
+    bounds: [-9.6, 36.9, -6.1, 42.2],
+    initialUrl: 'data/raster-frames/precipitation/2025-12-01.png',
+    paint: { 'raster-opacity': 0, 'raster-fade-duration': 0 },
+  },
+
+  // --- titiler dynamic tile sources (explore mode) ---
+  'soil-moisture-tiles': {
+    type: 'raster',
+    tileSource: true,
+    tiles: [
+      'https://titiler.cheias.pt/cog/tiles/WebMercatorQuad/{z}/{x}/{y}.png'
+      + '?url=https://pub-abad2527698d4bbab82318691c9b07a1.r2.dev/cog/soil-moisture/2026-01-28.tif'
+      + '&colormap_name=ylgnbu&rescale=0.05,0.50&return_mask=true'
+    ],
+    tileSize: 256,
+    attribution: 'Soil moisture: Open-Meteo / ERA5-Land',
+    paint: { 'raster-opacity': 0 },
+  },
+  'precipitation-tiles': {
+    type: 'raster',
+    tileSource: true,
+    tiles: [
+      'https://titiler.cheias.pt/cog/tiles/WebMercatorQuad/{z}/{x}/{y}.png'
+      + '?url=https://pub-abad2527698d4bbab82318691c9b07a1.r2.dev/cog/precipitation/2026-02-06.tif'
+      + '&colormap_name=ylorrd&rescale=1,80&return_mask=true'
+    ],
+    tileSize: 256,
+    attribution: 'Precipitation: Open-Meteo / ERA5',
+    paint: { 'raster-opacity': 0 },
+  },
+
   // Stubbed layers — data not yet available
   'sst-anomaly': { stub: true },
   'atmospheric-river-track': { stub: true },
@@ -153,7 +230,7 @@ const LAYER_DEFS = {
  * @param {maplibregl.Map} map
  * @param {string} layerId
  */
-function ensureLayer(map, layerId) {
+export function ensureLayer(map, layerId) {
   if (registeredLayers.has(layerId)) return;
 
   const def = LAYER_DEFS[layerId];
@@ -164,6 +241,57 @@ function ensureLayer(map, layerId) {
 
   if (def.stub) {
     console.log(`[layer-manager] Stub: ${layerId} (data not yet available)`);
+    registeredLayers.add(layerId);
+    return;
+  }
+
+  // Handle pre-rendered image sources (for scroll-driven narrative chapters)
+  if (def.imageSource) {
+    const [west, south, east, north] = def.bounds;
+    const sourceId = `source-${layerId}`;
+    if (!map.getSource(sourceId)) {
+      map.addSource(sourceId, {
+        type: 'image',
+        url: def.initialUrl,
+        coordinates: [
+          [west, north],  // top-left
+          [east, north],  // top-right
+          [east, south],  // bottom-right
+          [west, south],  // bottom-left
+        ]
+      });
+    }
+    if (!map.getLayer(layerId)) {
+      map.addLayer({
+        id: layerId,
+        type: 'raster',
+        source: sourceId,
+        paint: { ...def.paint },
+      });
+    }
+    registeredLayers.add(layerId);
+    return;
+  }
+
+  // Handle titiler tile sources (for explore mode)
+  if (def.tileSource) {
+    const sourceId = `source-${layerId}`;
+    if (!map.getSource(sourceId)) {
+      map.addSource(sourceId, {
+        type: 'raster',
+        tiles: def.tiles,
+        tileSize: def.tileSize || 256,
+        attribution: def.attribution || '',
+      });
+    }
+    if (!map.getLayer(layerId)) {
+      map.addLayer({
+        id: layerId,
+        type: 'raster',
+        source: sourceId,
+        paint: { ...def.paint },
+      });
+    }
     registeredLayers.add(layerId);
     return;
   }
@@ -192,6 +320,10 @@ function ensureLayer(map, layerId) {
 
     if (def['source-layer']) {
       layerConfig['source-layer'] = def['source-layer'];
+    }
+
+    if (def.layout) {
+      layerConfig.layout = { ...def.layout };
     }
 
     if (def.filter) {
@@ -287,6 +419,20 @@ export function removeLayer(map, layerId) {
   }
   registeredLayers.delete(layerId);
   activeLayers.delete(layerId);
+}
+
+/**
+ * Update the URL of an image source (for raster frame animation).
+ * @param {maplibregl.Map} map
+ * @param {string} layerId
+ * @param {string} url - New image URL
+ */
+export function updateImageSource(map, layerId, url) {
+  const sourceId = `source-${layerId}`;
+  const source = map.getSource(sourceId);
+  if (source && typeof source.updateImage === 'function') {
+    source.updateImage({ url });
+  }
 }
 
 /**
@@ -438,7 +584,8 @@ function getOpacityProperty(type) {
     case 'fill': return 'fill-opacity';
     case 'line': return 'line-opacity';
     case 'circle': return 'circle-opacity';
-    case 'symbol': return 'icon-opacity';
+    case 'heatmap': return 'heatmap-opacity';
+    case 'symbol': return 'text-opacity';
     case 'raster': return 'raster-opacity';
     default: return null;
   }

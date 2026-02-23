@@ -64,12 +64,12 @@ export const chapters = [
     camera: { center: [-8.3, 39.8], zoom: 7, pitch: 20, bearing: -5 },
     animation: { type: 'flyTo', duration: 2000 },
     layers: [
-      { id: 'soil-moisture-animation', opacity: 0.8, type: 'circle' },
+      { id: 'soil-moisture-raster', opacity: 0.8, type: 'raster' },
       { id: 'basins-outline', opacity: 0.4, type: 'geojson' },
     ],
     legend: [
-      { title: 'Solo seco', color: '#f7f7f7', type: 'fill' },
-      { title: 'Solo saturado', color: '#2166ac', type: 'fill' },
+      { title: 'Solo seco', color: '#a6611a', type: 'fill' },
+      { title: 'Solo saturado', color: '#018571', type: 'fill' },
     ],
     source: 'Dados: Open-Meteo / ERA5-Land Soil Moisture (0-30cm)',
     onEnter: null,
@@ -84,15 +84,15 @@ export const chapters = [
     camera: { center: [-8.5, 39.5], zoom: 7.5, pitch: 25, bearing: 10 },
     animation: { type: 'easeTo', duration: 1500 },
     layers: [
-      { id: 'precipitation-accumulation', opacity: 0.8, type: 'circle' },
+      { id: 'precipitation-raster', opacity: 0.8, type: 'raster' },
       { id: 'ipma-warnings-timeline', opacity: 0.9, type: 'geojson' },
       { id: 'basins-outline', opacity: 0.3, type: 'geojson' },
     ],
     legend: [
-      { title: '> 250mm', color: '#e74c3c', type: 'fill' },
-      { title: '100–250mm', color: '#F7991F', type: 'fill' },
-      { title: '50–100mm', color: '#f7f7b5', type: 'fill' },
-      { title: '< 50mm', color: '#2166ac', type: 'fill' },
+      { title: '> 50mm/dia', color: '#bd0026', type: 'fill' },
+      { title: '25–50mm/dia', color: '#fd8d3c', type: 'fill' },
+      { title: '10–25mm/dia', color: '#fecc5c', type: 'fill' },
+      { title: '< 10mm/dia', color: '#ffffb2', type: 'fill' },
     ],
     source: 'Dados: Open-Meteo / ERA5 Precipitation / IPMA',
     onEnter: null,
@@ -108,8 +108,9 @@ export const chapters = [
     animation: { type: 'easeTo', duration: 1200 },
     layers: [
       { id: 'glofas-discharge', opacity: 0.9, type: 'circle' },
+      { id: 'river-labels', opacity: 1.0, type: 'symbol' },
       { id: 'basins-fill', opacity: 0.4, type: 'geojson' },
-      { id: 'soil-moisture-snapshot', opacity: 0.3, type: 'circle' },
+      { id: 'soil-moisture-raster', opacity: 0.3, type: 'raster' },
     ],
     legend: [
       { title: 'Caudal excepcional', color: '#e74c3c', type: 'fill' },
@@ -181,7 +182,7 @@ export const chapters = [
       { id: 'basins-fill', opacity: 0.6, type: 'geojson' },
       { id: 'flood-extent-polygons', opacity: 0.5, type: 'geojson' },
       { id: 'consequence-markers', opacity: 0.8, type: 'geojson' },
-      { id: 'precipitation-accumulation', opacity: 0.3, type: 'circle' },
+      { id: 'precipitation-raster', opacity: 0.3, type: 'raster' },
     ],
     legend: [
       { title: 'Risco crítico', color: '#b2182b', type: 'fill' },
