@@ -1,34 +1,98 @@
-# Virtual environment
-.venv/
+# ===========================================
+# cheias.pt — .gitignore
+# ===========================================
 
-# Python
+# ----- Python -----
+.venv/
 __pycache__/
 *.py[cod]
 *.egg-info/
 dist/
 build/
 
-# Jupyter
+# ----- Node -----
+node_modules/
+
+# ----- Jupyter -----
 .ipynb_checkpoints/
 
-# OS
+# ----- OS -----
 .DS_Store
 Thumbs.db
+*.swp
+*.swo
+*~
 
-# IDE
+# ----- IDE -----
 .vscode/
 .idea/
+*.sublime-*
 
-# Claude Code (track settings.json, ignore personal local config)
-.claude/settings.local.json
-
-# Environment
+# ----- Credentials & secrets -----
 .env
 .env.local
+.env.*.local
+*.pem
+.netrc
 
-# Data files (too large for git, regenerable from notebooks/pipelines)
-data/flood-extent/*.geojson
-data/flood-extent/*.pmtiles
-data/flood-extent/*.parquet
-data/flood-extent/EMSR*/
+# ----- Claude Code -----
+.claude/settings.local.json
+
+# ----- Playwright -----
+.playwright-mcp/
+
+# ----- QGIS -----
+*.qgz~
+
+# ===========================================
+# QA & verification artifacts
+# ===========================================
+screenshots/
+renders/
+
+# ===========================================
+# Data — all binaries live in object storage
+# ===========================================
+# Pull with: ./data/<dir>/sync.sh
+# Push with: ./data/<dir>/sync.sh push
+# Sync all:  ./scripts/sync-data.sh
+#
+# Remote config: CHEIAS_REMOTE env var (default: cheias:cheias-pt)
+
+# -- Raster data --
+data/**/*.tif.aux.xml
+data/**/*.grib2
+data/**/*.grib
+data/raster-frames/**/*.png
+
+# -- Shapefiles --
+data/**/*.shp
+data/**/*.dbf
+data/**/*.shx
+data/**/*.prj
+data/**/*.cpg
+
+# -- Vector / tabular --
+data/**/*.geojson
+data/**/*.pmtiles
+data/**/*.parquet
+data/**/*.nc
+data/**/*.csv
+data/**/*.tif
+
+# -- Archives & misc --
+data/**/*.zip
+data/**/*.jpg
+data/**/*.html
+data/**/*.json
+
+# -- Entire dirs with no code value --
 data/cache/
+data/qgis/
+data/static-images/
+
+# ===========================================
+# Tracked inside data/ (NOT ignored)
+# ===========================================
+# sync.sh  — rclone sync scripts (this file pattern doesn't match above)
+# README.md — documentation (doesn't match above)
