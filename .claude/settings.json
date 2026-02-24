@@ -2,7 +2,7 @@
   "permissions": {
     "allow": [
       "Edit",
-      "MultiEdit", 
+      "MultiEdit",
       "Bash(mkdir *)",
       "Bash(node *)",
       "Bash(curl *)",
@@ -12,6 +12,9 @@
     ],
     "deny": [
       "Bash(rm -rf *)"
+    ],
+    "additionalDirectories": [
+      "/home/nls/Documents/dev/cheias-pt/data/temporal/{sst"
     ]
   }
 }

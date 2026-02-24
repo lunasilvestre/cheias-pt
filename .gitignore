@@ -65,12 +65,15 @@ data/**/*.grib2
 data/**/*.grib
 data/raster-frames/**/*.png
 
-# -- Shapefiles --
+# -- Shapefiles & GIS styles --
 data/**/*.shp
 data/**/*.dbf
 data/**/*.shx
 data/**/*.prj
 data/**/*.cpg
+data/**/*.lyr
+data/**/*.sld
+data/**/*.xml
 
 # -- Vector / tabular --
 data/**/*.geojson
@@ -85,6 +88,8 @@ data/**/*.zip
 data/**/*.jpg
 data/**/*.html
 data/**/*.json
+data/**/*.xlsx
+data/**/*.pdf
 
 # -- Entire dirs with no code value --
 data/cache/
