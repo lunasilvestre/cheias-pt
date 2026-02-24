@@ -231,6 +231,9 @@ async function loadAllData() {
   }
 }
 
+// Portuguese character set for TextLayer (ASCII + accented chars)
+const PT_CHARSET = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~àáâãçèéêíóôõúüÀÁÂÃÇÈÉÊÍÓÔÕÚÜ–—'.split('');
+
 // ---- Storm Track → Arc Segments ----
 function stormTracksToArcs(geojson) {
   const arcs = [];
@@ -371,12 +374,17 @@ function buildDeckLayers() {
       id: 'discharge-stations',
       data: loadedData.discharge.features,
       getPosition: d => d.geometry.coordinates,
-      getRadius: d => 3000 + (d.properties.anomaly_max || 1) * 1500,
+      getRadius: d => {
+        const p = d.properties;
+        const ratio = p.discharge_mean > 0 ? p.discharge_max / p.discharge_mean : 1;
+        return 2000 + ratio * 1200;
+      },
       getFillColor: d => {
-        const ratio = d.properties.anomaly_max || 1;
-        if (ratio > 8) return [255, 50, 50, 220];
-        if (ratio > 5) return [255, 165, 0, 200];
-        if (ratio > 3) return [255, 255, 0, 180];
+        const p = d.properties;
+        const ratio = p.discharge_mean > 0 ? p.discharge_max / p.discharge_mean : 1;
+        if (ratio > 6) return [255, 50, 50, 220];
+        if (ratio > 4) return [255, 165, 0, 200];
+        if (ratio > 2.5) return [255, 255, 0, 180];
         return [46, 204, 113, 160];
       },
       getLineColor: [255, 255, 255, 120],
@@ -388,9 +396,54 @@ function buildDeckLayers() {
       onHover: ({object}) => {
         if (object) {
           const p = object.properties;
-          updateInfo(`${p.name} (${p.basin}) — max: ${p.discharge_max?.toFixed(0)} m³/s, anomaly: ${p.anomaly_max?.toFixed(1)}×`);
+          const ratio = p.discharge_mean > 0 ? (p.discharge_max / p.discharge_mean).toFixed(1) : '?';
+          updateInfo(`${p.name} (${p.basin}) — max: ${p.discharge_max?.toFixed(0)} m³/s, ${ratio}× normal`);
         }
       },
+    }));
+
+    // Discharge station labels
+    layers.push(new TextLayer({
+      id: 'discharge-labels',
+      data: loadedData.discharge.features,
+      getPosition: d => d.geometry.coordinates,
+      getText: d => d.properties.name,
+      getSize: 11,
+      getColor: [220, 220, 220, 220],
+      getTextAnchor: 'start',
+      getAlignmentBaseline: 'center',
+      getPixelOffset: [12, 0],
+      fontFamily: 'Inter, -apple-system, sans-serif',
+      characterSet: PT_CHARSET,
+      outlineWidth: 2,
+      outlineColor: [10, 10, 20, 200],
+      pickable: false,
+    }));
+  }
+
+  // Storm name labels (at midpoint of each track)
+  if (layerVisibility.storms && loadedData.storms) {
+    const labels = loadedData.storms.features.map(f => {
+      const coords = f.geometry.coordinates;
+      const mid = coords[Math.floor(coords.length / 2)];
+      return { position: mid, name: f.properties.name, color: f.properties.color };
+    });
+    layers.push(new TextLayer({
+      id: 'storm-labels',
+      data: labels,
+      getPosition: d => d.position,
+      getText: d => d.name,
+      getSize: 14,
+      getColor: d => [...hexToRgb(d.color), 240],
+      getTextAnchor: 'middle',
+      getAlignmentBaseline: 'bottom',
+      getPixelOffset: [0, -14],
+      fontFamily: 'Inter, -apple-system, sans-serif',
+      fontWeight: 'bold',
+      characterSet: PT_CHARSET,
+      outlineWidth: 2,
+      outlineColor: [10, 10, 20, 220],
+      pickable: false,
     }));
   }
 
