@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>cheias.pt — deck.gl Atmospheric Prototype</title>
+
+  <!-- MapLibre GL JS -->
+  <script src="https://unpkg.com/maplibre-gl@^4.0.0/dist/maplibre-gl.js"></script>
+  <link href="https://unpkg.com/maplibre-gl@^4.0.0/dist/maplibre-gl.css" rel="stylesheet" />
+
+  <!-- deck.gl v9 (standalone bundle — includes all layer types) -->
+  <script src="https://unpkg.com/deck.gl@^9.0.0/dist.min.js"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0a0a; color: #e0e0e0; font-family: 'Inter', -apple-system, sans-serif; overflow: hidden; }
+
+    #map { width: 100vw; height: 100vh; }
+
+    /* Control panel — top right */
+    #controls {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 10;
+      background: rgba(15, 15, 25, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px;
+      min-width: 220px;
+      font-size: 13px;
+    }
+    #controls h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #888;
+      margin-bottom: 10px;
+    }
+    .layer-group { margin-bottom: 12px; }
+    .layer-group-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    .layer-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 3px 0;
+      cursor: pointer;
+    }
+    .layer-toggle input { accent-color: #3498db; cursor: pointer; }
+    .layer-toggle label { cursor: pointer; user-select: none; }
+    .layer-toggle .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    /* Preset buttons */
+    #presets {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      gap: 12px;
+    }
+    .preset-btn {
+      background: rgba(15, 15, 25, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 10px 20px;
+      color: #e0e0e0;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .preset-btn:hover { background: rgba(30, 30, 50, 0.9); border-color: rgba(255, 255, 255, 0.25); }
+    .preset-btn.active { border-color: #3498db; color: #3498db; }
+
+    /* Loading overlay */
+    #loading {
+      position: absolute;
+      inset: 0;
+      z-index: 100;
+      background: #0a0a0a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: #888;
+      transition: opacity 0.5s;
+    }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+
+    /* Info tooltip */
+    #info {
+      position: absolute;
+      bottom: 80px;
+      left: 16px;
+      z-index: 10;
+      background: rgba(15, 15, 25, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #999;
+      max-width: 300px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="loading">Loading data layers...</div>
+<div id="map"></div>
+
+<div id="controls">
+  <h3>Layers</h3>
+
+  <div class="layer-group">
+    <div class="layer-group-title">Chapter 2 — Atlantic Energy</div>
+    <div class="layer-toggle">
+      <input type="checkbox" id="toggle-ivt" checked />
+      <span class="dot" style="background: #e74c3c"></span>
+      <label for="toggle-ivt">IVT Heatmap</label>
+    </div>
+    <div class="layer-toggle">
+      <input type="checkbox" id="toggle-mslp" checked />
+      <span class="dot" style="background: #aaa"></span>
+      <label for="toggle-mslp">MSLP Contours</label>
+    </div>
+    <div class="layer-toggle">
+      <input type="checkbox" id="toggle-lh" checked />
+      <span class="dot" style="background: #fff"></span>
+      <label for="toggle-lh">L/H Markers</label>
+    </div>
+    <div class="layer-toggle">
+      <input type="checkbox" id="toggle-storms" checked />
+      <span class="dot" style="background: #3498db"></span>
+      <label for="toggle-storms">Storm Tracks</label>
+    </div>
+    <div class="layer-toggle">
+      <input type="checkbox" id="toggle-sst" />
+      <span class="dot" style="background: #1a6b4a"></span>
+      <label for="toggle-sst">SST Background</label>
+    </div>
+    <div class="layer-toggle">
+      <input type="checkbox" id="toggle-wind" />
+      <span class="dot" style="background: #7fb3d8"></span>
+      <label for="toggle-wind">Wind Barbs</label>
+    </div>
+    <div class="layer-toggle">
+      <input type="checkbox" id="toggle-lightning" checked />
+      <span class="dot" style="background: #ffff00"></span>
+      <label for="toggle-lightning">Lightning</label>
+    </div>
+  </div>
+
+  <div class="layer-group">
+    <div class="layer-group-title">Chapter 5 — Rivers</div>
+    <div class="layer-toggle">
+      <input type="checkbox" id="toggle-rivers" />
+      <span class="dot" style="background: #50a0f0"></span>
+      <label for="toggle-rivers">Rivers</label>
+    </div>
+    <div class="layer-toggle">
+      <input type="checkbox" id="toggle-discharge" />
+      <span class="dot" style="background: #2ecc71"></span>
+      <label for="toggle-discharge">Discharge Stations</label>
+    </div>
+  </div>
+</div>
+
+<div id="presets">
+  <button class="preset-btn active" id="btn-ch2" onclick="gotoPreset('ch2')">Ch2: Atlantico</button>
+  <button class="preset-btn" id="btn-ch5" onclick="gotoPreset('ch5')">Ch5: Rios</button>
+</div>
+
+<div id="info">
+  Hover over features for details. Toggle layers with checkboxes.
+</div>
+
+<script>
+// ============================================================
+// deck.gl Atmospheric Prototype — cheias.pt
+// ============================================================
+
+const { MapboxOverlay, HeatmapLayer, ArcLayer, ScatterplotLayer, PathLayer, GeoJsonLayer, TextLayer } = deck;
+
+// ---- State ----
+const layerVisibility = {
+  ivt: true, mslp: true, lh: true, storms: true, sst: false,
+  wind: false, lightning: true, rivers: false, discharge: false
+};
+let deckOverlay = null;
+let mapInstance = null;
+let loadedData = {};
+let animFrame = 0;
+let animRAF = null;
+
+// ---- Data Loading ----
+const DATA_BASE = 'data/qgis/';
+const dataFiles = {
+  ivt:        DATA_BASE + 'ivt-peak-storm.geojson',
+  mslp:       DATA_BASE + 'mslp-contours-v2.geojson',
+  lh:         DATA_BASE + 'mslp-lh-markers.geojson',
+  storms:     DATA_BASE + 'storm-tracks.geojson',
+  wind:       DATA_BASE + 'wind-barbs-kristin.geojson',
+  lightning:  DATA_BASE + 'lightning-kristin.geojson',
+  rivers:     DATA_BASE + 'rivers-portugal.geojson',
+  discharge:  DATA_BASE + 'discharge-stations.geojson',
+};
+
+async function loadAllData() {
+  const entries = Object.entries(dataFiles);
+  const results = await Promise.all(
+    entries.map(([key, url]) => fetch(url).then(r => r.json()).then(d => [key, d]))
+  );
+  for (const [key, data] of results) {
+    loadedData[key] = data;
+  }
+}
+
+// ---- Storm Track → Arc Segments ----
+function stormTracksToArcs(geojson) {
+  const arcs = [];
+  for (const feature of geojson.features) {
+    const coords = feature.geometry.coordinates;
+    const props = feature.properties;
+    for (let i = 0; i < coords.length - 1; i++) {
+      arcs.push({
+        source: coords[i],
+        target: coords[i + 1],
+        name: props.name,
+        color: props.color,
+        segIndex: i,
+        segTotal: coords.length - 1,
+      });
+    }
+  }
+  return arcs;
+}
+
+// ---- Color helpers ----
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return [r, g, b];
+}
+
+// ---- Build deck.gl Layers ----
+function buildDeckLayers() {
+  const layers = [];
+
+  // IVT Heatmap — atmospheric river
+  if (layerVisibility.ivt && loadedData.ivt) {
+    layers.push(new HeatmapLayer({
+      id: 'ivt-heatmap',
+      data: loadedData.ivt.features,
+      getPosition: d => d.geometry.coordinates,
+      getWeight: d => d.properties.ivt,
+      radiusPixels: 100,
+      intensity: 1,
+      threshold: 0.08,
+      colorRange: [
+        [20, 60, 100, 0],
+        [0, 140, 80, 60],
+        [200, 220, 0, 120],
+        [255, 165, 0, 180],
+        [255, 50, 0, 220],
+        [180, 0, 60, 255],
+      ],
+      pickable: false,
+    }));
+  }
+
+  // Storm track arcs
+  if (layerVisibility.storms && loadedData.storms) {
+    const arcs = stormTracksToArcs(loadedData.storms);
+    layers.push(new ArcLayer({
+      id: 'storm-arcs',
+      data: arcs,
+      getSourcePosition: d => d.source,
+      getTargetPosition: d => d.target,
+      getSourceColor: d => [...hexToRgb(d.color), 120],
+      getTargetColor: d => [...hexToRgb(d.color), 240],
+      getWidth: 3,
+      greatCircle: true,
+      pickable: true,
+      onHover: ({object}) => {
+        if (object) updateInfo(`Storm ${object.name}`);
+      },
+    }));
+  }
+
+  // Lightning — pulsing scatter
+  if (layerVisibility.lightning && loadedData.lightning) {
+    const pulse = Math.sin(animFrame * 0.08) * 0.5 + 0.5; // 0→1 oscillation
+    layers.push(new ScatterplotLayer({
+      id: 'lightning',
+      data: loadedData.lightning.features,
+      getPosition: d => d.geometry.coordinates,
+      getRadius: 4000 + pulse * 6000,
+      getFillColor: [255, 255, 100, Math.floor(120 + pulse * 135)],
+      radiusMinPixels: 2,
+      radiusMaxPixels: 10,
+      pickable: true,
+      onHover: ({object}) => {
+        if (object) updateInfo(`Lightning — radiance: ${object.properties.radiance?.toFixed(1)}`);
+      },
+    }));
+  }
+
+  // Wind barbs — direction-encoded dots
+  if (layerVisibility.wind && loadedData.wind) {
+    layers.push(new ScatterplotLayer({
+      id: 'wind-barbs',
+      data: loadedData.wind.features,
+      getPosition: d => d.geometry.coordinates,
+      getRadius: d => 1500 + d.properties.speed_ms * 200,
+      getFillColor: d => {
+        const spd = d.properties.speed_ms;
+        if (spd > 25) return [255, 50, 50, 200];
+        if (spd > 15) return [255, 165, 0, 180];
+        if (spd > 8)  return [255, 255, 100, 150];
+        return [127, 179, 216, 100];
+      },
+      radiusMinPixels: 1,
+      radiusMaxPixels: 6,
+      pickable: true,
+      onHover: ({object}) => {
+        if (object) {
+          const p = object.properties;
+          updateInfo(`Wind: ${p.speed_ms?.toFixed(1)} m/s (${p.speed_kt?.toFixed(0)} kt), dir ${p.direction?.toFixed(0)}°, Beaufort ${p.beaufort}`);
+        }
+      },
+    }));
+  }
+
+  // Rivers
+  if (layerVisibility.rivers && loadedData.rivers) {
+    layers.push(new PathLayer({
+      id: 'rivers',
+      data: loadedData.rivers.features,
+      getPath: d => d.geometry.coordinates,
+      getColor: [80, 160, 240, 160],
+      getWidth: 2,
+      widthMinPixels: 1,
+      widthMaxPixels: 5,
+      pickable: true,
+      onHover: ({object}) => {
+        if (object && object.properties.name) updateInfo(`River: ${object.properties.name}`);
+      },
+    }));
+  }
+
+  // Discharge stations
+  if (layerVisibility.discharge && loadedData.discharge) {
+    layers.push(new ScatterplotLayer({
+      id: 'discharge-stations',
+      data: loadedData.discharge.features,
+      getPosition: d => d.geometry.coordinates,
+      getRadius: d => 3000 + (d.properties.anomaly_max || 1) * 1500,
+      getFillColor: d => {
+        const ratio = d.properties.anomaly_max || 1;
+        if (ratio > 8) return [255, 50, 50, 220];
+        if (ratio > 5) return [255, 165, 0, 200];
+        if (ratio > 3) return [255, 255, 0, 180];
+        return [46, 204, 113, 160];
+      },
+      getLineColor: [255, 255, 255, 120],
+      lineWidthMinPixels: 1,
+      stroked: true,
+      radiusMinPixels: 6,
+      radiusMaxPixels: 30,
+      pickable: true,
+      onHover: ({object}) => {
+        if (object) {
+          const p = object.properties;
+          updateInfo(`${p.name} (${p.basin}) — max: ${p.discharge_max?.toFixed(0)} m³/s, anomaly: ${p.anomaly_max?.toFixed(1)}×`);
+        }
+      },
+    }));
+  }
+
+  return layers;
+}
+
+// ---- MapLibre native layers ----
+function addNativeLayers(map) {
+  // SST anomaly image source
+  map.addSource('sst-image', {
+    type: 'image',
+    url: 'renders/ch2-sst-atlantic.png',
+    coordinates: [
+      [-25, 53],  // top-left
+      [5, 53],    // top-right
+      [5, 26],    // bottom-right
+      [-25, 26],  // bottom-left
+    ]
+  });
+  map.addLayer({
+    id: 'sst-layer',
+    type: 'raster',
+    source: 'sst-image',
+    paint: { 'raster-opacity': 0.4 },
+    layout: { visibility: 'none' },
+  });
+
+  // MSLP contour lines
+  map.addSource('mslp-contours', { type: 'geojson', data: loadedData.mslp });
+  map.addLayer({
+    id: 'mslp-lines',
+    type: 'line',
+    source: 'mslp-contours',
+    paint: {
+      'line-color': '#cccccc',
+      'line-width': 1.2,
+      'line-opacity': 0.7,
+    },
+  });
+  // MSLP contour labels (along the line)
+  map.addLayer({
+    id: 'mslp-labels',
+    type: 'symbol',
+    source: 'mslp-contours',
+    layout: {
+      'symbol-placement': 'line',
+      'text-field': ['concat', ['get', 'hPa'], ' hPa'],
+      'text-size': 11,
+      'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
+      'text-offset': [0, -0.8],
+      'text-max-angle': 30,
+    },
+    paint: {
+      'text-color': '#cccccc',
+      'text-halo-color': 'rgba(10, 10, 20, 0.8)',
+      'text-halo-width': 1.5,
+    },
+  });
+
+  // MSLP Low/High markers
+  map.addSource('mslp-lh', { type: 'geojson', data: loadedData.lh });
+  map.addLayer({
+    id: 'mslp-lh-labels',
+    type: 'symbol',
+    source: 'mslp-lh',
+    layout: {
+      'text-field': ['get', 'type'],
+      'text-size': 22,
+      'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+      'text-allow-overlap': true,
+    },
+    paint: {
+      'text-color': ['match', ['get', 'type'], 'L', '#e74c3c', 'H', '#3498db', '#ffffff'],
+      'text-halo-color': 'rgba(10, 10, 20, 0.8)',
+      'text-halo-width': 2,
+    },
+  });
+  // Pressure value below L/H
+  map.addLayer({
+    id: 'mslp-lh-pressure',
+    type: 'symbol',
+    source: 'mslp-lh',
+    layout: {
+      'text-field': ['concat', ['to-string', ['get', 'pressure_hpa']], ' hPa'],
+      'text-size': 10,
+      'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
+      'text-offset': [0, 1.8],
+      'text-allow-overlap': true,
+    },
+    paint: {
+      'text-color': '#aaaaaa',
+      'text-halo-color': 'rgba(10, 10, 20, 0.8)',
+      'text-halo-width': 1,
+    },
+  });
+}
+
+// ---- Layer visibility sync ----
+function syncNativeLayerVisibility(map) {
+  const nativeMap = {
+    mslp: ['mslp-lines', 'mslp-labels'],
+    lh: ['mslp-lh-labels', 'mslp-lh-pressure'],
+    sst: ['sst-layer'],
+  };
+  for (const [key, layerIds] of Object.entries(nativeMap)) {
+    const vis = layerVisibility[key] ? 'visible' : 'none';
+    for (const id of layerIds) {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis);
+    }
+  }
+}
+
+// ---- UI ----
+function updateInfo(text) {
+  document.getElementById('info').textContent = text;
+}
+
+function wireToggles() {
+  const toggleMap = {
+    'toggle-ivt': 'ivt',
+    'toggle-mslp': 'mslp',
+    'toggle-lh': 'lh',
+    'toggle-storms': 'storms',
+    'toggle-sst': 'sst',
+    'toggle-wind': 'wind',
+    'toggle-lightning': 'lightning',
+    'toggle-rivers': 'rivers',
+    'toggle-discharge': 'discharge',
+  };
+  for (const [elId, key] of Object.entries(toggleMap)) {
+    const el = document.getElementById(elId);
+    el.checked = layerVisibility[key];
+    el.addEventListener('change', () => {
+      layerVisibility[key] = el.checked;
+      syncNativeLayerVisibility(mapInstance);
+      updateDeckLayers();
+    });
+  }
+}
+
+function syncCheckboxes() {
+  const toggleMap = {
+    'toggle-ivt': 'ivt', 'toggle-mslp': 'mslp', 'toggle-lh': 'lh',
+    'toggle-storms': 'storms', 'toggle-sst': 'sst', 'toggle-wind': 'wind',
+    'toggle-lightning': 'lightning', 'toggle-rivers': 'rivers', 'toggle-discharge': 'discharge',
+  };
+  for (const [elId, key] of Object.entries(toggleMap)) {
+    document.getElementById(elId).checked = layerVisibility[key];
+  }
+}
+
+function updateDeckLayers() {
+  if (deckOverlay) {
+    deckOverlay.setProps({ layers: buildDeckLayers() });
+  }
+}
+
+// ---- Presets ----
+window.gotoPreset = function(preset) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+
+  if (preset === 'ch2') {
+    document.getElementById('btn-ch2').classList.add('active');
+    // Ch2: Atlantic — show IVT, MSLP, storms, lightning, SST
+    Object.assign(layerVisibility, {
+      ivt: true, mslp: true, lh: true, storms: true, sst: true,
+      wind: false, lightning: true, rivers: false, discharge: false,
+    });
+    mapInstance.flyTo({
+      center: [-15, 40],
+      zoom: 4,
+      pitch: 0,
+      bearing: 0,
+      duration: 2000,
+    });
+  } else if (preset === 'ch5') {
+    document.getElementById('btn-ch5').classList.add('active');
+    // Ch5: Rivers — show rivers, discharge
+    Object.assign(layerVisibility, {
+      ivt: false, mslp: false, lh: false, storms: false, sst: false,
+      wind: false, lightning: false, rivers: true, discharge: true,
+    });
+    mapInstance.flyTo({
+      center: [-8.2, 39.6],
+      zoom: 7,
+      pitch: 0,
+      bearing: 0,
+      duration: 2000,
+    });
+  }
+  syncCheckboxes();
+  syncNativeLayerVisibility(mapInstance);
+  updateDeckLayers();
+};
+
+// ---- Animation Loop ----
+function animate() {
+  animFrame++;
+  if (layerVisibility.lightning) {
+    updateDeckLayers();
+  }
+  animRAF = requestAnimationFrame(animate);
+}
+
+// ---- Init ----
+async function init() {
+  // Load all data
+  await loadAllData();
+
+  // Create map
+  mapInstance = new maplibregl.Map({
+    container: 'map',
+    style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+    center: [-15, 40],
+    zoom: 4,
+    minZoom: 2,
+    maxZoom: 14,
+    attributionControl: true,
+  });
+
+  mapInstance.on('style.load', () => {
+    // Add native MapLibre layers
+    addNativeLayers(mapInstance);
+    syncNativeLayerVisibility(mapInstance);
+
+    // Create deck.gl overlay
+    deckOverlay = new MapboxOverlay({
+      interleaved: true,
+      layers: buildDeckLayers(),
+    });
+    mapInstance.addControl(deckOverlay);
+
+    // Wire UI
+    wireToggles();
+
+    // Start animation
+    animate();
+
+    // Hide loading
+    document.getElementById('loading').classList.add('hidden');
+  });
+}
+
+init().catch(err => {
+  console.error('Init failed:', err);
+  document.getElementById('loading').textContent = 'Failed to load: ' + err.message;
+});
+</script>
+</body>
+</html>
