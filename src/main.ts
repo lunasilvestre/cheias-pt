@@ -29,7 +29,7 @@ import {
   exitExplorationMode,
   geolocateUser,
 } from './exploration-mode';
-import { animateChapterEnter, animateHero } from './animations';
+import { animateChapterEnter, animateCounters, animateHero } from './animations';
 import type { ResolvedChapter } from './types';
 
 let previousChapterId: string | null = null;
@@ -108,6 +108,7 @@ function onChapterEnter(chapterId: string, config: ResolvedChapter): void {
 
   // GSAP text reveal animation
   animateChapterEnter(chapterId);
+  animateCounters(chapterId);
 
   updateDynamicLegend(chapterId, config);
   updateProgress(chapterId);

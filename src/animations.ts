@@ -6,6 +6,7 @@
  */
 
 import { gsap } from 'gsap';
+import { formatNumber } from './types';
 
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -125,4 +126,32 @@ export function animateHero(): void {
       1.2
     );
   }
+}
+
+/**
+ * Animate number counters within a chapter card.
+ * Finds elements with data-count-target and animates from 0 to target.
+ */
+export function animateCounters(chapterId: string): void {
+  if (prefersReducedMotion) return;
+
+  const section = document.querySelector(`[data-chapter="${chapterId}"]`);
+  if (!section) return;
+
+  const counters = section.querySelectorAll<HTMLElement>('[data-count-target]');
+  counters.forEach((el) => {
+    const target = parseInt(el.dataset.countTarget || '0', 10);
+    if (target <= 0) return;
+
+    const obj = { val: 0 };
+    gsap.to(obj, {
+      val: target,
+      duration: 1.2,
+      ease: 'power2.out',
+      snap: { val: 1 },
+      onUpdate() {
+        el.textContent = formatNumber(Math.round(obj.val));
+      },
+    });
+  });
 }
