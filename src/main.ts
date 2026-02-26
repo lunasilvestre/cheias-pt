@@ -28,6 +28,7 @@ import {
   exitExplorationMode,
   geolocateUser,
 } from './exploration-mode';
+import { animateChapterEnter, animateHero } from './animations';
 import type { ResolvedChapter } from './types';
 
 let previousChapterId: string | null = null;
@@ -42,6 +43,9 @@ function main(): void {
     initScrollObserver(chapters, onChapterEnter);
     initConsequencePopups(map);
     wireCTAButtons();
+
+    // Animate hero on initial load
+    animateHero();
   });
 }
 
@@ -100,6 +104,9 @@ function onChapterEnter(chapterId: string, config: ResolvedChapter): void {
   } else {
     exitExplorationMode();
   }
+
+  // GSAP text reveal animation
+  animateChapterEnter(chapterId);
 
   updateDynamicLegend(chapterId, config);
   updateProgress(chapterId);
