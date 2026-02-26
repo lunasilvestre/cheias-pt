@@ -96,6 +96,11 @@ data/**/*.json
 data/**/*.xlsx
 data/**/*.pdf
 
+# -- Video analysis (large binaries) --
+data/video-analysis/frames/
+data/video-analysis/*.mp4
+data/video-analysis/*.png
+
 # -- Entire dirs with no code value --
 data/cache/
 data/qgis/

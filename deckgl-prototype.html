@@ -12,23 +12,22 @@
     body { background: #0a0a0a; color: #e0e0e0; font-family: 'Inter', -apple-system, sans-serif; overflow: hidden; }
     #map { width: 100vw; height: 100vh; }
 
-    /* Side panels wrapper */
+    /* Side panels */
     #side-panels {
       position: absolute; top: 12px; right: 12px; z-index: 10;
       display: flex; flex-direction: column; gap: 8px;
     }
-
-    /* Layer panel */
-    #layers {
+    .glass-panel {
       background: rgba(12, 12, 20, 0.88);
       backdrop-filter: blur(12px);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 10px;
       padding: 14px 16px;
-      min-width: 190px;
-      font-size: 13px;
     }
-    #layers h3, #camera h3 {
+
+    /* Layers */
+    #layers { min-width: 190px; font-size: 13px; }
+    #layers h3, #camera h3, #colormap-panel h3 {
       font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
       color: #666; margin-bottom: 8px;
     }
@@ -39,35 +38,35 @@
     .lyr input { accent-color: #3498db; cursor: pointer; }
     .lyr label { cursor: pointer; user-select: none; }
     .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .section-div { height: 1px; background: rgba(255,255,255,0.06); margin: 6px 0; }
 
-    /* Camera panel */
-    #camera {
-      background: rgba(12, 12, 20, 0.88);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 10px;
-      padding: 14px 16px;
-    }
+    /* Camera */
     .cam-btns { display: flex; gap: 6px; flex-wrap: wrap; }
     .cam-btn {
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 14px;
-      color: #ccc;
-      font-size: 11px;
-      font-family: inherit;
-      letter-spacing: 0.5px;
-      padding: 5px 12px;
-      cursor: pointer;
+      border-radius: 14px; color: #ccc;
+      font-size: 11px; font-family: inherit; letter-spacing: 0.5px;
+      padding: 5px 12px; cursor: pointer;
       transition: background 0.2s, border-color 0.2s, color 0.2s;
     }
     .cam-btn:hover {
       background: rgba(255,255,255,0.12);
-      border-color: rgba(255,255,255,0.25);
-      color: #fff;
+      border-color: rgba(255,255,255,0.25); color: #fff;
     }
 
-    /* Timeline bar */
+    /* Colormap */
+    #colormap-panel select {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px; color: #ccc;
+      font-size: 12px; font-family: inherit;
+      padding: 5px 8px; cursor: pointer;
+    }
+    #colormap-panel select:focus { outline: none; border-color: rgba(255,255,255,0.3); }
+
+    /* Timeline */
     #timeline {
       position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
       background: rgba(12, 12, 20, 0.9);
@@ -83,10 +82,7 @@
       display: flex; align-items: center; justify-content: center;
     }
     #play-btn:hover { border-color: rgba(255,255,255,0.4); }
-    #date-slider {
-      flex: 1; height: 4px; accent-color: #3498db;
-      cursor: pointer;
-    }
+    #date-slider { flex: 1; height: 4px; accent-color: #3498db; cursor: pointer; }
     #date-label {
       font-size: 13px; font-variant-numeric: tabular-nums;
       min-width: 110px; text-align: right; color: #ccc;
@@ -103,6 +99,41 @@
       padding-left: 4px;
     }
 
+    /* Sub-timeline (hour selectors) */
+    #sub-timeline {
+      position: absolute; bottom: 76px; left: 20px; z-index: 10;
+      display: flex; gap: 10px;
+    }
+    .hour-selector {
+      background: rgba(12, 12, 20, 0.88);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 11px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .hs-label {
+      color: #666; font-size: 9px; text-transform: uppercase;
+      letter-spacing: 0.8px; margin-right: 2px;
+    }
+    .hour-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px; color: #999;
+      font-size: 10px; font-family: inherit;
+      padding: 2px 6px; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .hour-btn:hover { background: rgba(255,255,255,0.12); color: #ccc; }
+    .hour-btn.active { background: rgba(52,152,219,0.3); border-color: #3498db; color: #fff; }
+    .satir-slider {
+      width: 100px; height: 3px; accent-color: #9b59b6; cursor: pointer;
+    }
+    .satir-hour-val {
+      font-variant-numeric: tabular-nums; min-width: 36px; color: #ccc;
+    }
+
     /* Loading */
     #loading {
       position: absolute; inset: 0; z-index: 100;
@@ -112,6 +143,17 @@
       transition: opacity 0.4s;
     }
     #loading.hidden { opacity: 0; pointer-events: none; }
+
+    /* Attribution */
+    #cog-attribution {
+      position: absolute; bottom: 60px; right: 12px; z-index: 5;
+      font-size: 10px; line-height: 1.6; text-align: right;
+      color: rgba(255,255,255,0.3);
+    }
+    #cog-attribution a {
+      color: rgba(255,255,255,0.35); text-decoration: none;
+    }
+    #cog-attribution a:hover { color: rgba(255,255,255,0.6); }
   </style>
 </head>
 <body>
@@ -120,12 +162,16 @@
 <div id="map"></div>
 
 <div id="side-panels">
-  <div id="layers">
+  <div id="layers" class="glass-panel">
     <h3>Layers</h3>
     <div class="lyr"><input type="checkbox" id="t-sm" checked /><span class="dot" style="background:#2e86c1"></span><label for="t-sm">Soil moisture</label></div>
     <div class="lyr"><input type="checkbox" id="t-pr" /><span class="dot" style="background:#27ae60"></span><label for="t-pr">Precipitation</label></div>
+    <div class="lyr"><input type="checkbox" id="t-satir" /><span class="dot" style="background:#9b59b6"></span><label for="t-satir">Satellite IR</label></div>
+    <div class="section-div"></div>
+    <div class="lyr"><input type="checkbox" id="t-mslpf" /><span class="dot" style="background:#e67e22"></span><label for="t-mslpf">MSLP field</label></div>
     <div class="lyr"><input type="checkbox" id="t-mslp" /><span class="dot" style="background:#aaa"></span><label for="t-mslp">MSLP contours</label></div>
     <div class="lyr"><input type="checkbox" id="t-lh" /><span class="dot" style="background:#e74c3c"></span><label for="t-lh">L/H markers</label></div>
+    <div class="section-div"></div>
     <div class="lyr"><input type="checkbox" id="t-rivers" /><span class="dot" style="background:#50a0f0"></span><label for="t-rivers">Rivers</label></div>
     <div class="lyr"><input type="checkbox" id="t-discharge" /><span class="dot" style="background:#2ecc71"></span><label for="t-discharge">Discharge stations</label></div>
     <div class="lyr"><input type="checkbox" id="t-lightning" /><span class="dot" style="background:#f1c40f"></span><label for="t-lightning">Lightning</label></div>
@@ -133,7 +179,7 @@
     <div class="lyr"><input type="checkbox" id="t-wind" /><span class="dot" style="background:#7fb3d8"></span><label for="t-wind">Wind barbs</label></div>
   </div>
 
-  <div id="camera">
+  <div id="camera" class="glass-panel">
     <h3>Camera</h3>
     <div class="cam-btns">
       <button type="button" class="cam-btn" data-center="-20,42" data-zoom="4">Atlantic</button>
@@ -141,9 +187,37 @@
       <button type="button" class="cam-btn" data-center="-8,39.5" data-zoom="6.5">Portugal</button>
     </div>
   </div>
+
+  <div id="colormap-panel" class="glass-panel">
+    <h3>Colormap</h3>
+    <select id="colormap-select">
+      <option value="default">Default (per layer)</option>
+      <option value="viridis">Viridis</option>
+      <option value="blues">Blues</option>
+      <option value="plasma">Plasma</option>
+      <option value="inferno">Inferno</option>
+      <option value="greys">Greys</option>
+      <option value="thermal">Thermal</option>
+    </select>
+  </div>
 </div>
 
 <div id="storm-markers"></div>
+
+<div id="sub-timeline">
+  <div id="satir-hours" class="hour-selector" style="display:none">
+    <span class="hs-label">Hour</span>
+    <input type="range" min="0" max="23" value="12" class="satir-slider" id="satir-slider" />
+    <span class="satir-hour-val" id="satir-hour-val">12:00</span>
+  </div>
+  <div id="mslp-hours" class="hour-selector" style="display:none">
+    <span class="hs-label">UTC</span>
+    <button class="hour-btn" data-hour="0">00</button>
+    <button class="hour-btn" data-hour="6">06</button>
+    <button class="hour-btn active" data-hour="12">12</button>
+    <button class="hour-btn" data-hour="18">18</button>
+  </div>
+</div>
 
 <div id="timeline">
   <button id="play-btn" title="Play/Pause">&#9654;</button>
@@ -151,13 +225,113 @@
   <span id="date-label"></span>
 </div>
 
+<div id="cog-attribution">
+  Data: COG from <a href="https://developers.cloudflare.com/r2/" target="_blank" rel="noopener">Cloudflare R2</a><br>
+  Rendered with <a href="https://geotiffjs.github.io/" target="_blank" rel="noopener">geotiff.js</a> + <a href="https://deck.gl" target="_blank" rel="noopener">deck.gl</a>
+</div>
+
 <script>
 // ============================================================
-// cheias.pt — Layer Viewer (v2.1)
-// Smooth crossfades, animated toggles, camera presets
+// cheias.pt — Layer Viewer (v3.0)
+// Cloud-native COG rendering from Cloudflare R2
 // ============================================================
 
-const { MapboxOverlay, ArcLayer, ScatterplotLayer } = deck;
+const { MapboxOverlay, ArcLayer, ScatterplotLayer, BitmapLayer } = deck;
+
+// ---- geotiff.js lazy loader ----
+let GeoTIFF = null;
+async function ensureGeoTIFF() {
+  if (!GeoTIFF) {
+    const mod = await import('https://esm.sh/geotiff@2.1.3');
+    GeoTIFF = mod;
+  }
+  return GeoTIFF;
+}
+
+// ---- Colormap LUT factory ----
+function makeLUT(stops) {
+  return function(t) {
+    t = Math.max(0, Math.min(1, t));
+    const idx = t * (stops.length - 1);
+    const lo = Math.floor(idx);
+    const hi = Math.min(lo + 1, stops.length - 1);
+    const f = idx - lo;
+    return [
+      Math.round(stops[lo][0] * (1 - f) + stops[hi][0] * f),
+      Math.round(stops[lo][1] * (1 - f) + stops[hi][1] * f),
+      Math.round(stops[lo][2] * (1 - f) + stops[hi][2] * f),
+    ];
+  };
+}
+
+const viridisLUT = makeLUT([
+  [68,1,84],[72,33,115],[67,62,133],[56,88,140],
+  [45,112,142],[37,133,142],[30,155,138],[42,176,127],
+  [81,197,105],[134,213,73],[194,223,35],[253,231,37],
+]);
+const bluesLUT = makeLUT([
+  [8,29,88],[37,52,148],[34,94,168],[29,145,192],
+  [65,182,196],[127,205,187],[199,233,180],[237,248,177],
+]);
+const irLUT = makeLUT([
+  [20,20,20],[40,40,80],[60,60,150],[100,60,180],
+  [180,40,120],[220,80,40],[250,160,0],[255,255,100],
+]);
+const mslpLUT = makeLUT([
+  [33,102,172],[67,147,195],[146,197,222],[209,229,240],
+  [247,247,247],[253,219,199],[244,165,130],[214,96,77],[178,24,43],
+]);
+const plasmaLUT = makeLUT([
+  [13,8,135],[75,3,161],[125,3,168],[168,34,150],
+  [203,70,121],[229,107,93],[248,148,65],[253,195,40],[240,249,33],
+]);
+const infernoLUT = makeLUT([
+  [0,0,4],[22,11,57],[66,10,104],[106,23,110],
+  [147,38,103],[188,55,84],[221,81,58],[243,120,25],
+  [252,165,10],[246,215,70],[252,255,164],
+]);
+function greysLUT(t) {
+  t = Math.max(0, Math.min(1, t));
+  const v = Math.round(t * 255);
+  return [v, v, v];
+}
+
+const COLORMAPS = {
+  viridis: viridisLUT, blues: bluesLUT, thermal: irLUT,
+  mslp: mslpLUT, plasma: plasmaLUT, inferno: infernoLUT, greys: greysLUT,
+};
+
+// ---- R2 COG configuration ----
+const R2_BASE = 'https://pub-abad2527698d4bbab82318691c9b07a1.r2.dev/cog';
+
+const RASTER_LAYERS = {
+  sm: {
+    urlFn: (date) => `${R2_BASE}/soil-moisture/${date}.tif`,
+    defaultCmap: 'blues', rescale: null, maxOpacity: 0.8, swappable: true,
+  },
+  pr: {
+    urlFn: (date) => `${R2_BASE}/precipitation/${date}.tif`,
+    defaultCmap: 'viridis', rescale: null, maxOpacity: 0.75, swappable: true,
+  },
+  satir: {
+    urlFn: (date, hour) => {
+      if (date < '2026-01-27' || date > '2026-01-28') return null;
+      const h = String(hour != null ? hour : 12).padStart(2, '0');
+      return `${R2_BASE}/satellite-ir/${date}T${h}-00.tif`;
+    },
+    defaultCmap: 'thermal', rescale: null, maxOpacity: 0.9, swappable: false,
+  },
+  mslpf: {
+    urlFn: (date, hour) => {
+      const h = String(hour != null ? hour : 12).padStart(2, '0');
+      return `${R2_BASE}/mslp/${date}T${h}.tif`;
+    },
+    defaultCmap: 'mslp', rescale: [98000, 104000], maxOpacity: 0.6, swappable: false,
+  },
+};
+
+// Render order: bottom layer first
+const RASTER_ORDER = ['mslpf', 'sm', 'pr', 'satir'];
 
 // ---- Date array: 77 days from 2025-12-01 ----
 const dates = [];
@@ -168,42 +342,363 @@ for (let i = 0; i < 77; i++) {
   dates.push(d.toISOString().slice(0, 10));
 }
 
-// Storm date indices for timeline markers
 const storms = [
   { name: 'Kristin', date: '2026-01-27', color: '#3498db' },
   { name: 'Leonardo', date: '2026-02-05', color: '#e67e22' },
   { name: 'Marta', date: '2026-02-09', color: '#e74c3c' },
 ];
 
-// Raster bounds: Portugal mainland
-const PT_BOUNDS = [[-9.6, 42.2], [-6.1, 42.2], [-6.1, 36.9], [-9.6, 36.9]];
-
 // ---- State ----
 const vis = {
-  sm: true, pr: false, mslp: false, lh: false,
-  rivers: false, discharge: false, lightning: false,
-  arcs: true, wind: false,
+  sm: true, pr: false, satir: false, mslpf: false,
+  mslp: false, lh: false, rivers: false, discharge: false,
+  lightning: false, arcs: true, wind: false,
 };
 let playing = false;
 let playTimer = null;
 let mapInstance = null;
 let deckOverlay = null;
 let deckData = {};
+let activeColormap = 'default';
 
-// Crossfade state for raster double-buffering
-const crossfade = {
-  sm: { active: 'a', animId: null, lastDate: null },
-  pr: { active: 'a', animId: null, lastDate: null },
-};
+// Hour selections for sub-daily layers
+const rasterHour = { satir: 12, mslpf: 12 };
 
-// Animation tracking (keyed by "layerId:property")
+// Raster dual-buffer state (A/B for crossfade)
+const rasterBuf = {};
+for (const key of Object.keys(RASTER_LAYERS)) {
+  rasterBuf[key] = {
+    activeIs: 'a',
+    a: null, // { canvas, bounds }
+    b: null,
+    opA: 0, opB: 0,
+    fadeAnim: null,
+    currentUrl: null,
+  };
+}
+
+// COG data caches
+const rawCache = new Map();   // url -> { band, width, height, bounds, dMin, dMax }
+const canvasCache = new Map(); // "url::cmapName" -> { canvas, bounds }
+const MAX_RAW_CACHE = 12;
+const MAX_CANVAS_CACHE = 20;
+
+// MapLibre animation tracking
 const activeAnimations = {};
 
-// deck.gl layer opacity (animated independently)
+// deck.gl vector layer opacity
 const deckOpacity = { arcs: 1.0, wind: 0.0 };
 const deckAnimations = {};
 
-// ---- Opacity targets per MapLibre layer: [property, maxOpacity] pairs ----
+// ---- COG rendering pipeline ----
+async function fetchCOGRaw(url) {
+  if (rawCache.has(url)) return rawCache.get(url);
+
+  const gt = await ensureGeoTIFF();
+  const tiff = await gt.fromUrl(url);
+  const image = await tiff.getImage();
+  const width = image.getWidth();
+  const height = image.getHeight();
+  const bounds = image.getBoundingBox(); // [west, south, east, north]
+  const rasters = await image.readRasters({ samples: [0] });
+  const band = rasters[0];
+
+  let dMin = Infinity, dMax = -Infinity;
+  for (let i = 0; i < band.length; i++) {
+    const v = band[i];
+    if (!isNaN(v) && isFinite(v)) {
+      if (v < dMin) dMin = v;
+      if (v > dMax) dMax = v;
+    }
+  }
+
+  const raw = { band, width, height, bounds, dMin, dMax };
+  if (rawCache.size >= MAX_RAW_CACHE) {
+    rawCache.delete(rawCache.keys().next().value);
+  }
+  rawCache.set(url, raw);
+  return raw;
+}
+
+function renderBandToCanvas(raw, colormapFn, rescale) {
+  const { band, width, height, dMin: autoMin, dMax: autoMax } = raw;
+  const [dMin, dMax] = rescale || [autoMin, autoMax];
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  const imgData = ctx.createImageData(width, height);
+
+  const range = dMax - dMin || 1;
+  for (let i = 0; i < band.length; i++) {
+    const v = band[i];
+    const px = i * 4;
+    if (isNaN(v) || !isFinite(v)) {
+      imgData.data[px + 3] = 0; // transparent nodata
+    } else {
+      const t = Math.max(0, Math.min(1, (v - dMin) / range));
+      const [r, g, b] = colormapFn(t);
+      imgData.data[px] = r;
+      imgData.data[px + 1] = g;
+      imgData.data[px + 2] = b;
+      imgData.data[px + 3] = 200;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+  return canvas;
+}
+
+function getActiveColormapName(layerKey) {
+  const cfg = RASTER_LAYERS[layerKey];
+  return (activeColormap !== 'default' && cfg.swappable) ? activeColormap : cfg.defaultCmap;
+}
+
+function getColormapFn(layerKey) {
+  return COLORMAPS[getActiveColormapName(layerKey)];
+}
+
+async function renderCOG(url, layerKey) {
+  const cmapName = getActiveColormapName(layerKey);
+  const cacheKey = `${url}::${cmapName}`;
+
+  if (canvasCache.has(cacheKey)) return canvasCache.get(cacheKey);
+
+  const raw = await fetchCOGRaw(url);
+  const canvas = renderBandToCanvas(raw, COLORMAPS[cmapName], RASTER_LAYERS[layerKey].rescale);
+  const result = { canvas, bounds: raw.bounds };
+
+  if (canvasCache.size >= MAX_CANVAS_CACHE) {
+    canvasCache.delete(canvasCache.keys().next().value);
+  }
+  canvasCache.set(cacheKey, result);
+  return result;
+}
+
+// ---- Storm arc data ----
+const stormArcs = [
+  { source: [-32, 34], target: [-8.5, 41.5], name: 'Kristin',  color: [52, 152, 219] },
+  { source: [-30, 32], target: [-8, 39],     name: 'Leonardo', color: [230, 126, 34] },
+  { source: [-28, 30], target: [-6, 38],     name: 'Marta',    color: [231, 76, 60] },
+];
+
+// ---- Build deck.gl layers ----
+function buildDeckLayers() {
+  const layers = [];
+
+  // Raster BitmapLayers (bottom-to-top order)
+  for (const key of RASTER_ORDER) {
+    const buf = rasterBuf[key];
+    if (buf.a && buf.opA > 0.005) {
+      layers.push(new BitmapLayer({
+        id: `${key}-a`, image: buf.a.canvas,
+        bounds: buf.a.bounds, opacity: buf.opA, pickable: false,
+      }));
+    }
+    if (buf.b && buf.opB > 0.005) {
+      layers.push(new BitmapLayer({
+        id: `${key}-b`, image: buf.b.canvas,
+        bounds: buf.b.bounds, opacity: buf.opB, pickable: false,
+      }));
+    }
+  }
+
+  // Storm arcs
+  if (deckOpacity.arcs > 0.01) {
+    layers.push(new ArcLayer({
+      id: 'storm-arcs', data: stormArcs,
+      getSourcePosition: d => d.source,
+      getTargetPosition: d => d.target,
+      getSourceColor: d => [...d.color, 100],
+      getTargetColor: d => [...d.color, 240],
+      getWidth: 3, greatCircle: true, pickable: true,
+      opacity: deckOpacity.arcs,
+    }));
+  }
+
+  // Wind barbs
+  if (deckOpacity.wind > 0.01 && deckData.wind) {
+    layers.push(new ScatterplotLayer({
+      id: 'wind-barbs', data: deckData.wind.features,
+      getPosition: d => d.geometry.coordinates,
+      getRadius: d => 800 + d.properties.speed_ms * 150,
+      getFillColor: d => {
+        const s = d.properties.speed_ms;
+        if (s > 25) return [255, 50, 50, 200];
+        if (s > 15) return [255, 165, 0, 160];
+        if (s > 8) return [255, 255, 100, 120];
+        return [127, 179, 216, 80];
+      },
+      radiusMinPixels: 1, radiusMaxPixels: 5,
+      pickable: false, opacity: deckOpacity.wind,
+    }));
+  }
+
+  return layers;
+}
+
+function updateDeck() {
+  if (deckOverlay) deckOverlay.setProps({ layers: buildDeckLayers() });
+}
+
+// ---- Raster crossfade animations ----
+function crossfadeRaster(key, canvas, bounds, duration) {
+  const buf = rasterBuf[key];
+  const maxOp = RASTER_LAYERS[key].maxOpacity;
+
+  if (buf.fadeAnim) { cancelAnimationFrame(buf.fadeAnim); buf.fadeAnim = null; }
+
+  // Load new data into the INACTIVE buffer
+  const inactive = buf.activeIs === 'a' ? 'b' : 'a';
+  buf[inactive] = { canvas, bounds };
+
+  const activeKey = buf.activeIs === 'a' ? 'opA' : 'opB';
+  const inactiveKey = inactive === 'a' ? 'opA' : 'opB';
+  const startActive = buf[activeKey];
+  const startInactive = buf[inactiveKey];
+
+  const t0 = performance.now();
+  function tick(now) {
+    const t = Math.min((now - t0) / duration, 1);
+    const e = t * t * (3 - 2 * t); // smoothstep
+    buf[activeKey] = Math.max(0, startActive * (1 - e));
+    buf[inactiveKey] = startInactive + (maxOp - startInactive) * e;
+    updateDeck();
+    if (t < 1) {
+      buf.fadeAnim = requestAnimationFrame(tick);
+    } else {
+      buf.fadeAnim = null;
+      buf.activeIs = inactive;
+    }
+  }
+  buf.fadeAnim = requestAnimationFrame(tick);
+}
+
+function fadeInRaster(key, duration) {
+  const buf = rasterBuf[key];
+  const maxOp = RASTER_LAYERS[key].maxOpacity;
+  const opKey = buf.activeIs === 'a' ? 'opA' : 'opB';
+
+  if (buf.fadeAnim) { cancelAnimationFrame(buf.fadeAnim); buf.fadeAnim = null; }
+
+  const from = buf[opKey];
+  if (Math.abs(from - maxOp) < 0.01) { buf[opKey] = maxOp; updateDeck(); return; }
+
+  const t0 = performance.now();
+  function tick(now) {
+    const t = Math.min((now - t0) / duration, 1);
+    buf[opKey] = from + (maxOp - from) * t;
+    updateDeck();
+    if (t < 1) buf.fadeAnim = requestAnimationFrame(tick);
+    else buf.fadeAnim = null;
+  }
+  buf.fadeAnim = requestAnimationFrame(tick);
+}
+
+function fadeOutRaster(key, duration) {
+  const buf = rasterBuf[key];
+  if (buf.fadeAnim) { cancelAnimationFrame(buf.fadeAnim); buf.fadeAnim = null; }
+
+  const fromA = buf.opA, fromB = buf.opB;
+  if (fromA < 0.01 && fromB < 0.01) return;
+
+  const t0 = performance.now();
+  function tick(now) {
+    const t = Math.min((now - t0) / duration, 1);
+    buf.opA = fromA * (1 - t);
+    buf.opB = fromB * (1 - t);
+    updateDeck();
+    if (t < 1) buf.fadeAnim = requestAnimationFrame(tick);
+    else buf.fadeAnim = null;
+  }
+  buf.fadeAnim = requestAnimationFrame(tick);
+}
+
+// ---- Load raster for a given date ----
+async function loadRasterForDate(key, date) {
+  const cfg = RASTER_LAYERS[key];
+  const url = cfg.urlFn(date, rasterHour[key]);
+
+  if (!url) {
+    // No data for this date (e.g. satellite outside Jan 27-28)
+    fadeOutRaster(key, 200);
+    rasterBuf[key].currentUrl = null;
+    return;
+  }
+  if (url === rasterBuf[key].currentUrl) return;
+  rasterBuf[key].currentUrl = url;
+
+  try {
+    const { canvas, bounds } = await renderCOG(url, key);
+
+    // Guard: URL may have changed while we were fetching
+    if (rasterBuf[key].currentUrl !== url) return;
+
+    const buf = rasterBuf[key];
+    if (!buf[buf.activeIs]) {
+      // First frame — set directly, no crossfade
+      buf[buf.activeIs] = { canvas, bounds };
+      buf[buf.activeIs === 'a' ? 'opA' : 'opB'] = cfg.maxOpacity;
+      updateDeck();
+    } else {
+      const dur = playing ? 150 : 400;
+      crossfadeRaster(key, canvas, bounds, dur);
+    }
+  } catch (err) {
+    console.warn(`COG load failed for ${key}: ${err.message}`);
+  }
+}
+
+function prefetchNext(key, nextDate) {
+  const cfg = RASTER_LAYERS[key];
+  const url = cfg.urlFn(nextDate, rasterHour[key]);
+  if (url && !rawCache.has(url)) {
+    fetchCOGRaw(url).catch(() => {});
+  }
+}
+
+// ---- Format date for display ----
+function fmtDate(iso) {
+  const [y, m, d] = iso.split('-');
+  const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+}
+
+// ---- MapLibre paint property animation ----
+function animateOpacity(layerId, property, from, to, duration) {
+  const key = layerId + ':' + property;
+  if (activeAnimations[key]) { cancelAnimationFrame(activeAnimations[key]); delete activeAnimations[key]; }
+  if (Math.abs(from - to) < 0.005) {
+    if (mapInstance.getLayer(layerId)) mapInstance.setPaintProperty(layerId, property, to);
+    return;
+  }
+  const t0 = performance.now();
+  function tick(now) {
+    const t = Math.min((now - t0) / duration, 1);
+    const val = Math.max(0, from + (to - from) * t);
+    if (mapInstance.getLayer(layerId)) mapInstance.setPaintProperty(layerId, property, val);
+    if (t < 1) activeAnimations[key] = requestAnimationFrame(tick);
+    else delete activeAnimations[key];
+  }
+  activeAnimations[key] = requestAnimationFrame(tick);
+}
+
+// ---- deck.gl vector opacity animation ----
+function animateDeckOpacity(key, from, to, duration) {
+  if (deckAnimations[key]) cancelAnimationFrame(deckAnimations[key]);
+  if (Math.abs(from - to) < 0.005) { deckOpacity[key] = to; updateDeck(); return; }
+  const t0 = performance.now();
+  function tick(now) {
+    const t = Math.min((now - t0) / duration, 1);
+    deckOpacity[key] = from + (to - from) * t;
+    updateDeck();
+    if (t < 1) deckAnimations[key] = requestAnimationFrame(tick);
+    else delete deckAnimations[key];
+  }
+  deckAnimations[key] = requestAnimationFrame(tick);
+}
+
+// ---- MapLibre layer opacity targets ----
 const LAYER_OPACITY = {
   'mslp-lines':        [['line-opacity', 0.6]],
   'mslp-labels':       [['text-opacity', 1.0]],
@@ -215,121 +710,111 @@ const LAYER_OPACITY = {
   'lightning-circles': [['circle-opacity', 0.7]],
 };
 
-// ---- Format date for display ----
-function fmtDate(iso) {
-  const [y, m, d] = iso.split('-');
-  const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
-}
+const LAYER_MAP = {
+  mslp:      ['mslp-lines', 'mslp-labels'],
+  lh:        ['lh-labels', 'lh-pressure'],
+  rivers:    ['river-lines'],
+  discharge: ['discharge-circles', 'discharge-labels'],
+  lightning: ['lightning-circles'],
+};
 
-// ---- Reusable opacity animation (requestAnimationFrame) ----
-function animateOpacity(layerId, property, from, to, duration) {
-  const key = layerId + ':' + property;
-  if (activeAnimations[key]) {
-    cancelAnimationFrame(activeAnimations[key]);
-    delete activeAnimations[key];
-  }
-  if (Math.abs(from - to) < 0.005) {
-    if (mapInstance.getLayer(layerId)) {
-      mapInstance.setPaintProperty(layerId, property, to);
-    }
-    return;
-  }
-  const t0 = performance.now();
-  function tick(now) {
-    const t = Math.min((now - t0) / duration, 1);
-    const val = Math.max(0, from + (to - from) * t);
-    if (mapInstance.getLayer(layerId)) {
-      mapInstance.setPaintProperty(layerId, property, val);
-    }
-    if (t < 1) {
-      activeAnimations[key] = requestAnimationFrame(tick);
+// ---- Visibility sync ----
+function syncVisibility() {
+  // Raster layers (deck.gl BitmapLayers)
+  for (const key of Object.keys(RASTER_LAYERS)) {
+    if (vis[key]) {
+      const buf = rasterBuf[key];
+      if (buf[buf.activeIs]) {
+        fadeInRaster(key, 300);
+      } else {
+        // Need to load the frame first
+        const idx = parseInt(slider.value);
+        loadRasterForDate(key, dates[idx]);
+      }
     } else {
-      delete activeAnimations[key];
+      fadeOutRaster(key, 300);
     }
   }
-  activeAnimations[key] = requestAnimationFrame(tick);
+
+  // MapLibre vector layers
+  for (const [key, layerIds] of Object.entries(LAYER_MAP)) {
+    const on = vis[key];
+    for (const id of layerIds) {
+      if (!mapInstance.getLayer(id)) continue;
+      const defs = LAYER_OPACITY[id];
+      if (!defs) continue;
+      for (const [prop, max] of defs) {
+        const cur = mapInstance.getPaintProperty(id, prop) || 0;
+        animateOpacity(id, prop, cur, on ? max : 0, 300);
+      }
+    }
+  }
+
+  // deck.gl vector layers
+  animateDeckOpacity('arcs', deckOpacity.arcs, vis.arcs ? 1.0 : 0, 300);
+  animateDeckOpacity('wind', deckOpacity.wind, vis.wind ? 1.0 : 0, 300);
+
+  updateHourSelectors();
 }
 
-// ---- deck.gl opacity animation ----
-function animateDeckOpacity(key, from, to, duration) {
-  if (deckAnimations[key]) cancelAnimationFrame(deckAnimations[key]);
-  if (Math.abs(from - to) < 0.005) {
-    deckOpacity[key] = to;
+// ---- Hour selectors ----
+function updateHourSelectors() {
+  const idx = parseInt(slider.value);
+  const date = dates[idx];
+
+  // Satellite IR: only Jan 27-28
+  const showSat = vis.satir && date >= '2026-01-27' && date <= '2026-01-28';
+  document.getElementById('satir-hours').style.display = showSat ? 'flex' : 'none';
+
+  // MSLP field: always when active
+  document.getElementById('mslp-hours').style.display = vis.mslpf ? 'flex' : 'none';
+}
+
+function wireSatirHourSlider() {
+  const sl = document.getElementById('satir-slider');
+  const val = document.getElementById('satir-hour-val');
+  sl.addEventListener('input', () => {
+    const h = parseInt(sl.value);
+    val.textContent = String(h).padStart(2, '0') + ':00';
+    rasterHour.satir = h;
+    rasterBuf.satir.currentUrl = null; // force reload
+    const idx = parseInt(slider.value);
+    loadRasterForDate('satir', dates[idx]);
+  });
+}
+
+function wireMslpHourButtons() {
+  document.querySelectorAll('#mslp-hours .hour-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#mslp-hours .hour-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      rasterHour.mslpf = parseInt(btn.dataset.hour);
+      rasterBuf.mslpf.currentUrl = null;
+      const idx = parseInt(slider.value);
+      loadRasterForDate('mslpf', dates[idx]);
+    });
+  });
+}
+
+// ---- Colormap selector ----
+function wireColormapSelector() {
+  document.getElementById('colormap-select').addEventListener('change', (e) => {
+    activeColormap = e.target.value;
+    canvasCache.clear(); // invalidate rendered canvases
+
+    // Re-render visible swappable layers from cached raw data
+    for (const key of Object.keys(RASTER_LAYERS)) {
+      if (!vis[key] || !RASTER_LAYERS[key].swappable) continue;
+      const buf = rasterBuf[key];
+      const url = buf.currentUrl;
+      if (!url || !rawCache.has(url)) continue;
+
+      const raw = rawCache.get(url);
+      const canvas = renderBandToCanvas(raw, getColormapFn(key), RASTER_LAYERS[key].rescale);
+      buf[buf.activeIs] = { canvas, bounds: raw.bounds };
+    }
     updateDeck();
-    return;
-  }
-  const t0 = performance.now();
-  function tick(now) {
-    const t = Math.min((now - t0) / duration, 1);
-    deckOpacity[key] = from + (to - from) * t;
-    updateDeck();
-    if (t < 1) {
-      deckAnimations[key] = requestAnimationFrame(tick);
-    } else {
-      delete deckAnimations[key];
-    }
-  }
-  deckAnimations[key] = requestAnimationFrame(tick);
-}
-
-// ---- Raster frame crossfade (dual-source A/B swap) ----
-function crossfadeFrame(type, date, duration) {
-  const cf = crossfade[type];
-  if (cf.lastDate === date) return;
-  cf.lastDate = date;
-
-  const prefix = type === 'sm' ? 'soil-moisture' : 'precipitation';
-  const layerA = type + '-layer-a';
-  const layerB = type + '-layer-b';
-  const target = type === 'sm' ? 0.8 : 0.75;
-
-  const isA = cf.active === 'a';
-  const activeLayer = isA ? layerA : layerB;
-  const inactiveLayer = isA ? layerB : layerA;
-  const inactiveSource = prefix + '-' + (isA ? 'b' : 'a');
-
-  // Cancel any conflicting animations (crossfade + toggle animations)
-  if (cf.animId) {
-    cancelAnimationFrame(cf.animId);
-    cf.animId = null;
-  }
-  for (const lid of [layerA, layerB]) {
-    const k = lid + ':raster-opacity';
-    if (activeAnimations[k]) {
-      cancelAnimationFrame(activeAnimations[k]);
-      delete activeAnimations[k];
-    }
-  }
-  // Snap to known state
-  mapInstance.setPaintProperty(activeLayer, 'raster-opacity', target);
-  mapInstance.setPaintProperty(inactiveLayer, 'raster-opacity', 0);
-
-  // Load new frame into the inactive source
-  if (mapInstance.getSource(inactiveSource)) {
-    try {
-      mapInstance.getSource(inactiveSource).updateImage({
-        url: 'data/raster-frames/' + prefix + '/' + date + '.png',
-      });
-    } catch (_) { /* AbortError from rapid image swaps — expected */ }
-  }
-
-  // Animate the crossfade (values clamped to prevent negative opacity)
-  const t0 = performance.now();
-  function tick(now) {
-    const t = Math.min((now - t0) / duration, 1);
-    mapInstance.setPaintProperty(activeLayer, 'raster-opacity', Math.max(0, target * (1 - t)));
-    mapInstance.setPaintProperty(inactiveLayer, 'raster-opacity', Math.max(0, target * t));
-    if (t < 1) {
-      cf.animId = requestAnimationFrame(tick);
-    } else {
-      cf.animId = null;
-    }
-  }
-  cf.animId = requestAnimationFrame(tick);
-
-  // Flip active buffer
-  cf.active = isA ? 'b' : 'a';
+  });
 }
 
 // ---- Data loading ----
@@ -352,100 +837,8 @@ async function loadVectorData() {
   return { mslp, lh, rivers, discharge, lightning, wind };
 }
 
-// ---- Storm arc data (hardcoded approximate tracks) ----
-const stormArcs = [
-  { source: [-32, 34], target: [-8.5, 41.5], name: 'Kristin',  color: [52, 152, 219] },
-  { source: [-30, 32], target: [-8, 39],     name: 'Leonardo', color: [230, 126, 34] },
-  { source: [-28, 30], target: [-6, 38],     name: 'Marta',    color: [231, 76, 60] },
-];
-
-// ---- Build deck.gl layers ----
-function buildDeckLayers() {
-  const layers = [];
-
-  if (deckOpacity.arcs > 0.01) {
-    layers.push(new ArcLayer({
-      id: 'storm-arcs',
-      data: stormArcs,
-      getSourcePosition: d => d.source,
-      getTargetPosition: d => d.target,
-      getSourceColor: d => [...d.color, 100],
-      getTargetColor: d => [...d.color, 240],
-      getWidth: 3,
-      greatCircle: true,
-      pickable: true,
-      opacity: deckOpacity.arcs,
-    }));
-  }
-
-  if (deckOpacity.wind > 0.01 && deckData.wind) {
-    layers.push(new ScatterplotLayer({
-      id: 'wind-barbs',
-      data: deckData.wind.features,
-      getPosition: d => d.geometry.coordinates,
-      getRadius: d => 800 + d.properties.speed_ms * 150,
-      getFillColor: d => {
-        const s = d.properties.speed_ms;
-        if (s > 25) return [255, 50, 50, 200];
-        if (s > 15) return [255, 165, 0, 160];
-        if (s > 8) return [255, 255, 100, 120];
-        return [127, 179, 216, 80];
-      },
-      radiusMinPixels: 1,
-      radiusMaxPixels: 5,
-      pickable: false,
-      opacity: deckOpacity.wind,
-    }));
-  }
-
-  return layers;
-}
-
-function updateDeck() {
-  if (deckOverlay) deckOverlay.setProps({ layers: buildDeckLayers() });
-}
-
-// ---- Add native MapLibre layers ----
-// All layers start with visibility:'visible'; opacity controls show/hide
+// ---- Add MapLibre native layers (vectors only — rasters via deck.gl) ----
 function addNativeLayers(map, data) {
-  const firstDate = dates[0];
-
-  // Soil moisture — dual sources for crossfade
-  map.addSource('soil-moisture-a', {
-    type: 'image',
-    url: 'data/raster-frames/soil-moisture/' + firstDate + '.png',
-    coordinates: PT_BOUNDS,
-  });
-  map.addSource('soil-moisture-b', {
-    type: 'image',
-    url: 'data/raster-frames/soil-moisture/' + firstDate + '.png',
-    coordinates: PT_BOUNDS,
-  });
-  map.addLayer({ id: 'sm-layer-b', type: 'raster', source: 'soil-moisture-b',
-    paint: { 'raster-opacity': 0 },
-  });
-  map.addLayer({ id: 'sm-layer-a', type: 'raster', source: 'soil-moisture-a',
-    paint: { 'raster-opacity': 0.8 },
-  });
-
-  // Precipitation — dual sources for crossfade
-  map.addSource('precipitation-a', {
-    type: 'image',
-    url: 'data/raster-frames/precipitation/' + firstDate + '.png',
-    coordinates: PT_BOUNDS,
-  });
-  map.addSource('precipitation-b', {
-    type: 'image',
-    url: 'data/raster-frames/precipitation/' + firstDate + '.png',
-    coordinates: PT_BOUNDS,
-  });
-  map.addLayer({ id: 'pr-layer-b', type: 'raster', source: 'precipitation-b',
-    paint: { 'raster-opacity': 0 },
-  });
-  map.addLayer({ id: 'pr-layer-a', type: 'raster', source: 'precipitation-a',
-    paint: { 'raster-opacity': 0 },
-  });
-
   // MSLP contours
   map.addSource('mslp', { type: 'geojson', data: data.mslp });
   map.addLayer({ id: 'mslp-lines', type: 'line', source: 'mslp',
@@ -546,68 +939,6 @@ function addNativeLayers(map, data) {
   });
 }
 
-// ---- Layer visibility mapping ----
-const LAYER_MAP = {
-  sm:        ['sm-layer-a', 'sm-layer-b'],
-  pr:        ['pr-layer-a', 'pr-layer-b'],
-  mslp:      ['mslp-lines', 'mslp-labels'],
-  lh:        ['lh-labels', 'lh-pressure'],
-  rivers:    ['river-lines'],
-  discharge: ['discharge-circles', 'discharge-labels'],
-  lightning: ['lightning-circles'],
-  // arcs + wind controlled via deck.gl
-};
-
-function syncVisibility() {
-  for (const [key, layerIds] of Object.entries(LAYER_MAP)) {
-    const on = vis[key];
-
-    // Raster crossfade layers: only the active buffer gets target opacity
-    if (key === 'sm' || key === 'pr') {
-      const cf = crossfade[key];
-      // Cancel any in-progress crossfade to avoid conflicting animations
-      if (cf.animId) {
-        cancelAnimationFrame(cf.animId);
-        cf.animId = null;
-      }
-      const target = key === 'sm' ? 0.8 : 0.75;
-      const aLayer = layerIds[0];
-      const bLayer = layerIds[1];
-      const activeLayer = cf.active === 'a' ? aLayer : bLayer;
-      const inactiveLayer = cf.active === 'a' ? bLayer : aLayer;
-
-      if (on) {
-        const cur = mapInstance.getPaintProperty(activeLayer, 'raster-opacity') || 0;
-        animateOpacity(activeLayer, 'raster-opacity', cur, target, 300);
-        const curI = mapInstance.getPaintProperty(inactiveLayer, 'raster-opacity') || 0;
-        animateOpacity(inactiveLayer, 'raster-opacity', curI, 0, 300);
-      } else {
-        const curA = mapInstance.getPaintProperty(aLayer, 'raster-opacity') || 0;
-        animateOpacity(aLayer, 'raster-opacity', curA, 0, 300);
-        const curB = mapInstance.getPaintProperty(bLayer, 'raster-opacity') || 0;
-        animateOpacity(bLayer, 'raster-opacity', curB, 0, 300);
-      }
-      continue;
-    }
-
-    // Standard vector layers
-    for (const id of layerIds) {
-      if (!mapInstance.getLayer(id)) continue;
-      const defs = LAYER_OPACITY[id];
-      if (!defs) continue;
-      for (const [prop, max] of defs) {
-        const cur = mapInstance.getPaintProperty(id, prop) || 0;
-        const target = on ? max : 0;
-        animateOpacity(id, prop, cur, target, 300);
-      }
-    }
-  }
-
-  // deck.gl layers
-  animateDeckOpacity('arcs', deckOpacity.arcs, vis.arcs ? 1.0 : 0, 300);
-  animateDeckOpacity('wind', deckOpacity.wind, vis.wind ? 1.0 : 0, 300);
-}
-
 // ---- Timeline ----
 const slider = document.getElementById('date-slider');
 const dateLabel = document.getElementById('date-label');
@@ -617,30 +948,25 @@ function setDate(idx) {
   const date = dates[idx];
   dateLabel.textContent = fmtDate(date);
 
-  // Shorter crossfade during playback so it completes before the next frame
-  const dur = playing ? 150 : 400;
+  // Load visible raster layers
+  for (const key of Object.keys(RASTER_LAYERS)) {
+    if (vis[key]) loadRasterForDate(key, date);
+  }
 
-  for (const type of ['sm', 'pr']) {
-    if (vis[type]) {
-      crossfadeFrame(type, date, dur);
-    } else {
-      // Update active source silently (ready when toggled on)
-      const cf = crossfade[type];
-      cf.lastDate = date;
-      const prefix = type === 'sm' ? 'soil-moisture' : 'precipitation';
-      const src = mapInstance.getSource(prefix + '-' + cf.active);
-      if (src) {
-        try {
-          src.updateImage({ url: 'data/raster-frames/' + prefix + '/' + date + '.png' });
-        } catch (_) { /* AbortError from rapid swaps */ }
-      }
+  // Pre-fetch next frame
+  const nextIdx = Math.min(idx + 1, 76);
+  if (nextIdx !== idx) {
+    for (const key of Object.keys(RASTER_LAYERS)) {
+      if (vis[key]) prefetchNext(key, dates[nextIdx]);
     }
   }
+
+  updateHourSelectors();
 }
 
 slider.addEventListener('input', () => setDate(parseInt(slider.value)));
 
-// Play/Pause (rAF-based for precise frame pacing)
+// Play/Pause
 const playBtn = document.getElementById('play-btn');
 let lastPlayTime = 0;
 function playLoop(now) {
@@ -666,14 +992,14 @@ function togglePlay() {
 }
 playBtn.addEventListener('click', togglePlay);
 
-// Keyboard: space = play/pause, arrows = step
+// Keyboard
 document.addEventListener('keydown', (e) => {
   if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
-  if (e.code === 'ArrowRight') { setDate(Math.min(76, parseInt(slider.value) + 1)); }
-  if (e.code === 'ArrowLeft') { setDate(Math.max(0, parseInt(slider.value) - 1)); }
+  if (e.code === 'ArrowRight') setDate(Math.min(76, parseInt(slider.value) + 1));
+  if (e.code === 'ArrowLeft') setDate(Math.max(0, parseInt(slider.value) - 1));
 });
 
-// ---- Storm markers on timeline ----
+// ---- Storm markers ----
 function renderStormMarkers() {
   const el = document.getElementById('storm-markers');
   for (const s of storms) {
@@ -693,24 +1019,23 @@ function renderStormMarkers() {
 // ---- Wire toggles ----
 function wireToggles() {
   const map = {
-    't-sm': 'sm', 't-pr': 'pr', 't-mslp': 'mslp', 't-lh': 'lh',
+    't-sm': 'sm', 't-pr': 'pr', 't-satir': 'satir', 't-mslpf': 'mslpf',
+    't-mslp': 'mslp', 't-lh': 'lh',
     't-rivers': 'rivers', 't-discharge': 'discharge', 't-lightning': 'lightning',
     't-arcs': 'arcs', 't-wind': 'wind',
   };
   for (const [elId, key] of Object.entries(map)) {
     const el = document.getElementById(elId);
+    if (!el) continue;
     el.checked = vis[key];
     el.addEventListener('change', () => {
       vis[key] = el.checked;
-      if (el.checked && (key === 'sm' || key === 'pr')) {
-        crossfade[key].lastDate = null;
-      }
       syncVisibility();
     });
   }
 }
 
-// ---- Wire camera buttons ----
+// ---- Camera buttons ----
 function wireCameraButtons() {
   document.querySelectorAll('.cam-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -723,8 +1048,11 @@ function wireCameraButtons() {
 
 // ---- Init ----
 async function init() {
+  // Start loading geotiff.js immediately (parallel with vector data)
+  const geotiffReady = ensureGeoTIFF();
   const vectorData = await loadVectorData();
   deckData.wind = vectorData.wind;
+  await geotiffReady;
 
   mapInstance = new maplibregl.Map({
     container: 'map',
@@ -735,7 +1063,7 @@ async function init() {
     maxZoom: 14,
   });
 
-  mapInstance.on('style.load', () => {
+  mapInstance.on('style.load', async () => {
     addNativeLayers(mapInstance, vectorData);
 
     deckOverlay = new MapboxOverlay({ interleaved: true, layers: buildDeckLayers() });
@@ -743,8 +1071,14 @@ async function init() {
 
     wireToggles();
     wireCameraButtons();
-    setDate(0);
+    wireColormapSelector();
+    wireSatirHourSlider();
+    wireMslpHourButtons();
     renderStormMarkers();
+
+    // Load first raster frame (soil moisture is checked by default)
+    await loadRasterForDate('sm', dates[0]);
+    setDate(0);
 
     document.getElementById('loading').classList.add('hidden');
   });
