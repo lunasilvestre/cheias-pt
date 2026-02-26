@@ -23,8 +23,8 @@ mapping activated (EMSR861, EMSR864).
 
 | Phase | Focus | Status |
 |-------|-------|--------|
-| 0 | Vite scaffold + scroll engine port | **NEXT** — prompt at `prompts/phase-0-vite-port.md` |
-| 1 | Data pipelines (PNGs, frontal GeoJSONs, Sentinel-2) | Pending |
+| 0 | Vite scaffold + scroll engine port | **DONE** — merged to main |
+| 1 | Data pipelines (PNGs, frontal GeoJSONs, Sentinel-2) | **NEXT** |
 | 2 | Core narrative effects (WeatherLayers GL, globe, 3D) | Pending |
 | 3 | Polish (responsive, a11y, exploration mode) | Pending |
 
@@ -35,8 +35,8 @@ No React. No framework. See `prompts/creative-direction-plan-v2.md` for full rat
 
 ## Git Rules
 
-- **Branch strategy:** `main` is v0 (working prototype). Phase work goes on feature branches.
-  Create `v2/phase-0` off main. Merge only after all acceptance criteria pass.
+- **Branch strategy:** `main` has the v2 Vite+TypeScript codebase (Phase 0 merged). Phase work goes on feature branches.
+  Create `v2/phase-N` off main. Merge only after all acceptance criteria pass.
 - **Commit after each completed task** (0.1, 0.2, etc.), not at the end of a phase.
 - **Commit message format:** `phase-0.3: upgrade MapLibre v4 → v5`
 - **Before every commit:** `npm run build && npx tsc --noEmit` — both must pass.
@@ -169,10 +169,11 @@ All outputs are gitignored — scripts are the reproducible source of truth.
 
 ---
 
-## v0 Prototype (current, on main)
+## v2 Codebase (current, on main)
 
-`deckgl-prototype.html` — single-file MapLibre + deck.gl v9 spike. Demonstrates
-COG-from-R2 rendering, temporal animation, layer composition. Development spike only.
+`src/` + `index.html` — Vite + vanilla TypeScript scrollytelling (9 modules, 1,831 lines).
+MapLibre v5 + deck.gl v9 MapboxOverlay + scrollama + GSAP. Phase 0 complete.
 
-`src/` + `index.html` — scrollytelling v0 (1,773 lines, 10 vanilla JS modules).
-This is what Phase 0 ports to Vite + TypeScript.
+`deckgl-prototype.html` — single-file deck.gl v9 spike (development artifact, not part of build).
+
+The original v0 JS modules (`src/*.js`) are superseded by the TypeScript ports (`src/*.ts`).
