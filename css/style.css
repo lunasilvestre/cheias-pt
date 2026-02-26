@@ -27,6 +27,29 @@ body {
   overflow-x: hidden;
 }
 
+/* --- Custom Scrollbar --- */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a212e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1a3a4e;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2166ac;
+}
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #1a3a4e #0a212e;
+}
+
 /* --- Fixed Map Background --- */
 #map-container {
   position: fixed;
@@ -140,14 +163,6 @@ body {
   border: 2px solid #0f2b3b;
   border-radius: 4px;
   padding: 28px 24px;
-  transition: opacity 0.4s ease, transform 0.4s ease;
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-.chapter--active .chapter__card {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 .chapter__card--centered {
@@ -356,16 +371,25 @@ body {
   display: block;
 }
 
-/* --- Active state transition --- */
-.chapter__card {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+/* --- Active state transition (CSS fallback for prefers-reduced-motion) ---
+   GSAP handles animations when motion is allowed; these CSS transitions
+   serve as the graceful fallback. */
+@media (prefers-reduced-motion: reduce) {
+  .chapter__card {
+    opacity: 0;
+    transform: translateY(0);
+    transition: opacity 0.3s ease;
+  }
+
+  .chapter--active .chapter__card {
+    opacity: 1;
+  }
 }
 
-.chapter--active .chapter__card {
-  opacity: 1;
-  transform: translateY(0);
+@media (prefers-reduced-motion: no-preference) {
+  .chapter__card {
+    /* GSAP controls opacity/transform via inline styles */
+  }
 }
 
 /* --- Chapter 2: Moisture Arrow --- */

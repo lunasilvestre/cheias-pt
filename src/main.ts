@@ -5,6 +5,7 @@
  * Wires chapter transitions to camera and layer changes.
  */
 
+import '../css/style.css';
 import { chapters } from './chapters';
 import { initMap, flyToChapter, getMap } from './map-setup';
 import {
