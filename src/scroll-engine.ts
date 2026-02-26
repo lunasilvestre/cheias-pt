@@ -1,11 +1,11 @@
 /**
  * cheias.pt — Scroll engine
  *
- * Merges scroll observation, chapter wiring, and temporal player.
- * Task 0.2: Port with IntersectionObserver.
- * Task 0.4: Replace with scrollama.
+ * Uses scrollama for scroll-driven chapter transitions.
+ * Merges chapter wiring and temporal player logic.
  */
 
+import scrollama from 'scrollama';
 import type { Map as MLMap } from 'maplibre-gl';
 import type { Chapter, ResolvedChapter, RasterFrame } from './types';
 import { loadRasterManifest, loadDischargeTimeseries } from './data-loader';
@@ -41,15 +41,10 @@ function resetPlayer(): void {
   onFrameChange = null;
 }
 
-// ── Scroll observer state ──
+// ── Scrollama instance ──
 
-let observer: IntersectionObserver | null = null;
+let scroller: scrollama.ScrollamaInstance | null = null;
 let activeChapterId: string | null = null;
-let lastTriggerTime = 0;
-const DEBOUNCE_MS = 300;
-
-let progressListenerActive = false;
-const progressCallbacks = new Map<string, (progress: number) => void>();
 
 // ── Chapter wiring state ──
 
@@ -133,16 +128,11 @@ export async function enterChapter3(): Promise<void> {
     updateDateLabel(smFrames[0].date);
   }
 
-  onChapterProgress('chapter-3', (progress) => {
-    setProgress(progress);
-  });
-
   showDateLabel();
   ch3Initialized = true;
 }
 
 export function leaveChapter3(): void {
-  offChapterProgress('chapter-3');
   resetPlayer();
   hideDateLabel();
   ch3Initialized = false;
@@ -171,16 +161,11 @@ export async function enterChapter4(): Promise<void> {
     updateDateLabel(precipFrames[0].date);
   }
 
-  onChapterProgress('chapter-4', (progress) => {
-    setProgress(progress);
-  });
-
   showDateLabel();
   ch4Initialized = true;
 }
 
 export function leaveChapter4(): void {
-  offChapterProgress('chapter-4');
   resetPlayer();
   hideDateLabel();
   ch4Initialized = false;
@@ -232,42 +217,7 @@ export async function enterChapter9(): Promise<void> {
   ensureLayer(map, 'basins-outline');
 }
 
-// ── Scroll progress tracking ──
-
-function onChapterProgress(chapterId: string, callback: (progress: number) => void): void {
-  progressCallbacks.set(chapterId, callback);
-}
-
-function offChapterProgress(chapterId: string): void {
-  progressCallbacks.delete(chapterId);
-}
-
-function startProgressListener(): void {
-  if (progressListenerActive) return;
-  progressListenerActive = true;
-
-  let ticking = false;
-  window.addEventListener('scroll', () => {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(() => {
-      ticking = false;
-      if (!activeChapterId || !progressCallbacks.has(activeChapterId)) return;
-
-      const section = document.querySelector(`[data-chapter="${activeChapterId}"]`);
-      if (!section) return;
-
-      const rect = section.getBoundingClientRect();
-      const sectionHeight = rect.height;
-      if (sectionHeight <= 0) return;
-
-      const progress = Math.max(0, Math.min(1, -rect.top / sectionHeight));
-      progressCallbacks.get(activeChapterId)!(progress);
-    });
-  }, { passive: true });
-}
-
-// ── Scroll observer (IntersectionObserver — replaced with scrollama in 0.4) ──
+// ── Active state management ──
 
 function updateActiveState(chapterId: string): void {
   const sections = document.querySelectorAll('[data-chapter]');
@@ -280,13 +230,16 @@ function updateActiveState(chapterId: string): void {
   }
 }
 
+// ── Scrollama-based scroll observer ──
+
 /**
- * Initialize the scroll observer on all chapter sections.
+ * Initialize scrollama on all chapter sections.
  */
 export function initScrollObserver(
   chapters: Chapter[],
   onChapterEnter: (chapterId: string, config: ResolvedChapter) => void
 ): void {
+  // Build chapter lookup including substeps
   const chapterMap = new Map<string, ResolvedChapter>();
   for (const ch of chapters) {
     chapterMap.set(ch.id, ch as ResolvedChapter);
@@ -302,40 +255,44 @@ export function initScrollObserver(
     }
   }
 
-  observer = new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
+  scroller = scrollama();
 
-        const chapterId = (entry.target as HTMLElement).dataset.chapter;
-        if (!chapterId || chapterId === activeChapterId) continue;
+  scroller
+    .setup({
+      step: '[data-chapter]',
+      offset: 0.5,
+      progress: true,
+    })
+    .onStepEnter((response) => {
+      const chapterId = response.element.dataset.chapter;
+      if (!chapterId || chapterId === activeChapterId) return;
 
-        const now = Date.now();
-        if (now - lastTriggerTime < DEBOUNCE_MS) continue;
+      activeChapterId = chapterId;
 
-        lastTriggerTime = now;
-        activeChapterId = chapterId;
-
-        const config = chapterMap.get(chapterId);
-        if (config) {
-          onChapterEnter(chapterId, config);
-        }
-
-        updateActiveState(chapterId);
+      const config = chapterMap.get(chapterId);
+      if (config) {
+        onChapterEnter(chapterId, config);
       }
-    },
-    {
-      root: null,
-      threshold: 0.5,
-    }
-  );
 
-  const sections = document.querySelectorAll('[data-chapter]');
-  for (const section of sections) {
-    observer.observe(section);
-  }
+      updateActiveState(chapterId);
+    })
+    .onStepProgress((response) => {
+      const chapterId = response.element.dataset.chapter;
+      if (!chapterId) return;
 
-  startProgressListener();
+      // Drive temporal animation for chapters 3 and 4 via scroll progress
+      if (chapterId === 'chapter-3' && ch3Initialized) {
+        setProgress(response.progress);
+      }
+      if (chapterId === 'chapter-4' && ch4Initialized) {
+        setProgress(response.progress);
+      }
+    });
+
+  // Handle window resize
+  window.addEventListener('resize', () => {
+    scroller?.resize();
+  });
 }
 
 export function getActiveChapter(): string | null {
@@ -343,9 +300,9 @@ export function getActiveChapter(): string | null {
 }
 
 export function destroyScrollObserver(): void {
-  if (observer) {
-    observer.disconnect();
-    observer = null;
+  if (scroller) {
+    scroller.destroy();
+    scroller = null;
   }
   activeChapterId = null;
 }
