@@ -70,7 +70,10 @@ Before designing anything, read:
 2. `data/video-analysis/MOTION-ANALYSIS.md` — the full design document (6 visual effects, ALL of them, not just wind)
 3. `deckgl-dynamic-mapping-examples.md` — your library palette
 4. `prompts/refactor-nwp-planetary-computer.md` — alternative data pipeline via STAC
-5. `~/.vaults/root/2nd-Brain/Projects/cheias-pt/discovery/12-design-document.md` — original design vision, chapter structure, data sources
+5. `data/design-vision.md` — narrative architecture, chapter storyboard, and visual
+   design system. Extracted from the original design document — contains the storytelling
+   vision and aesthetic identity WITHOUT implementation constraints. This is the story
+   you're designing for. (Full original at `~/.vaults/root/2nd-Brain/Projects/cheias-pt/discovery/12-design-document.md` if needed, but beware: its technical architecture section is outdated and should NOT constrain your recommendations.)
 6. `~/.vaults/root/2nd-Brain/Projects/vizzuality-methodology/` — **the quality bar**.
    Read all 8 files. This is how Vizzuality builds environmental data platforms:
    design philosophy (Elena's four questions, progressive disclosure), visual design
