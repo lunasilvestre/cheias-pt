@@ -154,6 +154,36 @@
       color: rgba(255,255,255,0.35); text-decoration: none;
     }
     #cog-attribution a:hover { color: rgba(255,255,255,0.6); }
+
+    /* Wind particles */
+    .wind-density {
+      padding: 2px 0 2px 23px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .wind-density input[type="range"] {
+      width: 80px; height: 3px; accent-color: #a855f7; cursor: pointer;
+    }
+    .wind-density span {
+      font-size: 10px; color: #888;
+      font-variant-numeric: tabular-nums;
+      min-width: 34px;
+    }
+    #wind-legend {
+      position: absolute; bottom: 64px; left: 12px; z-index: 5;
+    }
+    .wl-bar {
+      width: 120px; height: 6px; border-radius: 3px;
+      background: linear-gradient(to right, rgb(0,200,100), rgb(255,255,100) 35%, rgb(255,165,0) 65%, rgb(180,0,255));
+    }
+    .wl-labels {
+      display: flex; justify-content: space-between;
+      font-size: 9px; color: rgba(255,255,255,0.4);
+      margin-top: 2px; width: 120px;
+    }
+    .wl-title {
+      font-size: 8px; color: rgba(255,255,255,0.3);
+      text-align: center; margin-top: 1px; width: 120px;
+    }
   </style>
 </head>
 <body>
@@ -177,6 +207,11 @@
     <div class="lyr"><input type="checkbox" id="t-lightning" /><span class="dot" style="background:#f1c40f"></span><label for="t-lightning">Lightning</label></div>
     <div class="lyr"><input type="checkbox" id="t-arcs" checked /><span class="dot" style="background:#3498db"></span><label for="t-arcs">Storm arcs</label></div>
     <div class="lyr"><input type="checkbox" id="t-wind" /><span class="dot" style="background:#7fb3d8"></span><label for="t-wind">Wind barbs</label></div>
+    <div class="lyr"><input type="checkbox" id="t-wp" /><span class="dot" style="background:#a855f7"></span><label for="t-wp">Wind particles</label></div>
+    <div id="wind-density" class="wind-density" style="display:none">
+      <input type="range" id="wp-density" min="500" max="10000" value="2000" step="100" />
+      <span id="wp-count">2,000</span>
+    </div>
   </div>
 
   <div id="camera" class="glass-panel">
@@ -225,6 +260,12 @@
   <span id="date-label"></span>
 </div>
 
+<div id="wind-legend" style="display:none">
+  <div class="wl-bar"></div>
+  <div class="wl-labels"><span>0</span><span>8</span><span>15</span><span>25+</span></div>
+  <div class="wl-title">Wind speed (m/s)</div>
+</div>
+
 <div id="cog-attribution">
   Data: COG from <a href="https://developers.cloudflare.com/r2/" target="_blank" rel="noopener">Cloudflare R2</a><br>
   Rendered with <a href="https://geotiffjs.github.io/" target="_blank" rel="noopener">geotiff.js</a> + <a href="https://deck.gl" target="_blank" rel="noopener">deck.gl</a>
@@ -236,7 +277,7 @@
 // Cloud-native COG rendering from Cloudflare R2
 // ============================================================
 
-const { MapboxOverlay, ArcLayer, ScatterplotLayer, BitmapLayer } = deck;
+const { MapboxOverlay, ArcLayer, BitmapLayer, PathLayer } = deck;
 
 // ---- geotiff.js lazy loader ----
 let GeoTIFF = null;
@@ -352,13 +393,12 @@ const storms = [
 const vis = {
   sm: true, pr: false, satir: false, mslpf: false,
   mslp: false, lh: false, rivers: false, discharge: false,
-  lightning: false, arcs: true, wind: false,
+  lightning: false, arcs: true, wind: false, wp: false,
 };
 let playing = false;
 let playTimer = null;
 let mapInstance = null;
 let deckOverlay = null;
-let deckData = {};
 let activeColormap = 'default';
 
 // Hour selections for sub-daily layers
@@ -387,8 +427,17 @@ const MAX_CANVAS_CACHE = 20;
 const activeAnimations = {};
 
 // deck.gl vector layer opacity
-const deckOpacity = { arcs: 1.0, wind: 0.0 };
+const deckOpacity = { arcs: 1.0, wind: 0.0, wp: 0.0 };
 const deckAnimations = {};
+
+// Wind particle state
+let windField = null;
+let windParticles = [];
+let windParticleCount = 2000;
+let windAnimFrame = null;
+let windFieldLoading = false;
+let windFieldKey = null;
+let windBarbData = [];
 
 // ---- COG rendering pipeline ----
 async function fetchCOGRaw(url) {
@@ -475,6 +524,162 @@ async function renderCOG(url, layerKey) {
   return result;
 }
 
+// ---- Wind particle system ----
+const WIND_BOUNDS = [-35, 28, 5, 56];
+const MAX_TRAIL = 12;
+const MAX_AGE = 150;
+const SPEED_MULT = 0.001;
+
+async function loadWindFieldData(date, hour) {
+  const h = String(hour != null ? hour : 12).padStart(2, '0');
+  const key = `${date}:${h}`;
+  if (key === windFieldKey && windField) return windField;
+
+  const uUrl = `${R2_BASE}/wind-u/${date}T${h}.tif`;
+  const vUrl = `${R2_BASE}/wind-v/${date}T${h}.tif`;
+  const [uRaw, vRaw] = await Promise.all([fetchCOGRaw(uUrl), fetchCOGRaw(vUrl)]);
+
+  windField = {
+    uData: uRaw.band, vData: vRaw.band,
+    width: uRaw.width, height: uRaw.height,
+    bbox: uRaw.bounds,
+  };
+  windFieldKey = key;
+  return windField;
+}
+
+function sampleWind(lon, lat, field) {
+  if (!field) return [0, 0];
+  const [west, south, east, north] = field.bbox;
+  const fx = (lon - west) / (east - west) * (field.width - 1);
+  const fy = (north - lat) / (north - south) * (field.height - 1);
+  if (fx < 0 || fx >= field.width - 1 || fy < 0 || fy >= field.height - 1) return [0, 0];
+
+  const ix = Math.floor(fx), iy = Math.floor(fy);
+  const dx = fx - ix, dy = fy - iy;
+  const w = field.width;
+  const i00 = iy * w + ix, i10 = i00 + 1, i01 = i00 + w, i11 = i01 + 1;
+
+  const u = field.uData[i00]*(1-dx)*(1-dy) + field.uData[i10]*dx*(1-dy)
+          + field.uData[i01]*(1-dx)*dy + field.uData[i11]*dx*dy;
+  const v = field.vData[i00]*(1-dx)*(1-dy) + field.vData[i10]*dx*(1-dy)
+          + field.vData[i01]*(1-dx)*dy + field.vData[i11]*dx*dy;
+  if (isNaN(u) || isNaN(v)) return [0, 0];
+  return [u, v];
+}
+
+function windSpeedColor(speed) {
+  if (speed > 25) return [180, 0, 255];
+  if (speed > 15) return [255, 165, 0];
+  if (speed > 8)  return [255, 255, 100];
+  return [0, 200, 100];
+}
+
+function spawnParticle() {
+  const lon = WIND_BOUNDS[0] + Math.random() * (WIND_BOUNDS[2] - WIND_BOUNDS[0]);
+  const lat = WIND_BOUNDS[1] + Math.random() * (WIND_BOUNDS[3] - WIND_BOUNDS[1]);
+  return { lon, lat, age: 0, trail: [[lon, lat]], speed: 0 };
+}
+
+function initWindParticles() {
+  windParticles = [];
+  for (let i = 0; i < windParticleCount; i++) windParticles.push(spawnParticle());
+}
+
+function advectParticles() {
+  if (!windField) return;
+  for (let i = 0; i < windParticles.length; i++) {
+    const p = windParticles[i];
+    const [u, v] = sampleWind(p.lon, p.lat, windField);
+    p.speed = Math.sqrt(u * u + v * v);
+
+    p.lon += u * SPEED_MULT / Math.cos(p.lat * Math.PI / 180);
+    p.lat += v * SPEED_MULT;
+    p.trail.push([p.lon, p.lat]);
+    if (p.trail.length > MAX_TRAIL) p.trail.shift();
+    p.age++;
+
+    if (p.age > MAX_AGE ||
+        p.lon < WIND_BOUNDS[0] || p.lon > WIND_BOUNDS[2] ||
+        p.lat < WIND_BOUNDS[1] || p.lat > WIND_BOUNDS[3] ||
+        p.speed < 0.5 ||
+        (p.age > 30 && Math.random() < 0.03)) {
+      windParticles[i] = spawnParticle();
+    }
+  }
+}
+
+let lastWindFrameTime = 0;
+function windAnimLoop(now) {
+  if (!vis.wp || !windField) { windAnimFrame = null; return; }
+  if (now - lastWindFrameTime >= 33) {
+    lastWindFrameTime = now;
+    advectParticles();
+    updateDeck();
+  }
+  windAnimFrame = requestAnimationFrame(windAnimLoop);
+}
+
+function startWindAnimation() {
+  if (windAnimFrame) return;
+  lastWindFrameTime = performance.now();
+  windAnimFrame = requestAnimationFrame(windAnimLoop);
+}
+
+function stopWindAnimation() {
+  if (windAnimFrame) { cancelAnimationFrame(windAnimFrame); windAnimFrame = null; }
+}
+
+function generateWindBarbs(field) {
+  if (!field) return [];
+  const [west, south, east, north] = field.bbox;
+  const barbs = [];
+  const step = 1; // 1° grid
+  const lonMin = Math.max(Math.ceil(west), WIND_BOUNDS[0]);
+  const lonMax = Math.min(Math.floor(east), WIND_BOUNDS[2]);
+  const latMin = Math.max(Math.ceil(south), WIND_BOUNDS[1]);
+  const latMax = Math.min(Math.floor(north), WIND_BOUNDS[3]);
+
+  for (let lon = lonMin; lon <= lonMax; lon += step) {
+    for (let lat = latMin; lat <= latMax; lat += step) {
+      const [u, v] = sampleWind(lon, lat, field);
+      const speed = Math.sqrt(u * u + v * v);
+      if (speed < 1) continue;
+
+      const len = Math.min(speed * 0.035, 1.0);
+      const cosLat = Math.cos(lat * Math.PI / 180);
+      const dx = (u / speed) * len / cosLat;
+      const dy = (v / speed) * len;
+
+      barbs.push({ path: [[lon, lat], [lon + dx, lat + dy]], speed });
+    }
+  }
+  return barbs;
+}
+
+async function loadWindFieldForCurrentDate() {
+  if (windFieldLoading) return;
+  windFieldLoading = true;
+  const idx = parseInt(slider.value);
+  const date = dates[idx];
+  const hour = rasterHour.mslpf || 12;
+  try {
+    await loadWindFieldData(date, hour);
+    if (vis.wp) {
+      if (windParticles.length !== windParticleCount) initWindParticles();
+      startWindAnimation();
+    }
+    if (vis.wind) {
+      windBarbData = generateWindBarbs(windField);
+      updateDeck();
+    }
+  } catch (err) {
+    console.warn('Wind field load failed:', err.message);
+  } finally {
+    windFieldLoading = false;
+  }
+}
+
 // ---- Storm arc data ----
 const stormArcs = [
   { source: [-32, 34], target: [-8.5, 41.5], name: 'Kristin',  color: [52, 152, 219] },
@@ -516,22 +721,49 @@ function buildDeckLayers() {
     }));
   }
 
-  // Wind barbs
-  if (deckOpacity.wind > 0.01 && deckData.wind) {
-    layers.push(new ScatterplotLayer({
-      id: 'wind-barbs', data: deckData.wind.features,
-      getPosition: d => d.geometry.coordinates,
-      getRadius: d => 800 + d.properties.speed_ms * 150,
-      getFillColor: d => {
-        const s = d.properties.speed_ms;
-        if (s > 25) return [255, 50, 50, 200];
-        if (s > 15) return [255, 165, 0, 160];
-        if (s > 8) return [255, 255, 100, 120];
-        return [127, 179, 216, 80];
+  // Wind barbs (dynamic from U/V field)
+  if (deckOpacity.wind > 0.01 && windBarbData.length > 0) {
+    layers.push(new PathLayer({
+      id: 'wind-barbs',
+      data: windBarbData,
+      getPath: d => d.path,
+      getColor: d => {
+        const [r, g, b] = windSpeedColor(d.speed);
+        return [r, g, b, 180];
       },
-      radiusMinPixels: 1, radiusMaxPixels: 5,
-      pickable: false, opacity: deckOpacity.wind,
+      getWidth: 2,
+      widthMinPixels: 1,
+      widthMaxPixels: 3,
+      capRounded: true,
+      opacity: deckOpacity.wind,
     }));
+  }
+
+  // Wind particles
+  if (deckOpacity.wp > 0.01 && windField) {
+    const pathData = [];
+    for (let i = 0; i < windParticles.length; i++) {
+      if (windParticles[i].trail.length >= 2) pathData.push(windParticles[i]);
+    }
+    if (pathData.length > 0) {
+      layers.push(new PathLayer({
+        id: 'wind-particles',
+        data: pathData,
+        getPath: d => d.trail,
+        getColor: d => {
+          const [r, g, b] = windSpeedColor(d.speed);
+          const fade = Math.max(0.3, 1 - d.age / MAX_AGE);
+          return [r, g, b, Math.round(180 * fade)];
+        },
+        getWidth: 1.5,
+        widthMinPixels: 1,
+        widthMaxPixels: 2.5,
+        jointRounded: true,
+        capRounded: true,
+        opacity: deckOpacity.wp,
+        updateTriggers: { getPath: Date.now(), getColor: Date.now() },
+      }));
+    }
   }
 
   return layers;
@@ -752,7 +984,27 @@ function syncVisibility() {
 
   // deck.gl vector layers
   animateDeckOpacity('arcs', deckOpacity.arcs, vis.arcs ? 1.0 : 0, 300);
-  animateDeckOpacity('wind', deckOpacity.wind, vis.wind ? 1.0 : 0, 300);
+
+  // Wind barbs (dynamic)
+  if (vis.wind) {
+    loadWindFieldForCurrentDate();
+    animateDeckOpacity('wind', deckOpacity.wind, 1.0, 300);
+  } else {
+    animateDeckOpacity('wind', deckOpacity.wind, 0, 300);
+  }
+
+  // Wind particles
+  if (vis.wp) {
+    loadWindFieldForCurrentDate();
+    animateDeckOpacity('wp', deckOpacity.wp, 1.0, 300);
+    document.getElementById('wind-density').style.display = 'flex';
+    document.getElementById('wind-legend').style.display = 'block';
+  } else {
+    animateDeckOpacity('wp', deckOpacity.wp, 0, 300);
+    setTimeout(() => { if (!vis.wp) stopWindAnimation(); }, 350);
+    document.getElementById('wind-density').style.display = 'none';
+    document.getElementById('wind-legend').style.display = 'none';
+  }
 
   updateHourSelectors();
 }
@@ -766,8 +1018,8 @@ function updateHourSelectors() {
   const showSat = vis.satir && date >= '2026-01-27' && date <= '2026-01-28';
   document.getElementById('satir-hours').style.display = showSat ? 'flex' : 'none';
 
-  // MSLP field: always when active
-  document.getElementById('mslp-hours').style.display = vis.mslpf ? 'flex' : 'none';
+  // MSLP field / wind layers share 6-hourly selector
+  document.getElementById('mslp-hours').style.display = (vis.mslpf || vis.wp || vis.wind) ? 'flex' : 'none';
 }
 
 function wireSatirHourSlider() {
@@ -792,6 +1044,7 @@ function wireMslpHourButtons() {
       rasterBuf.mslpf.currentUrl = null;
       const idx = parseInt(slider.value);
       loadRasterForDate('mslpf', dates[idx]);
+      if (vis.wp || vis.wind) { windFieldKey = null; loadWindFieldForCurrentDate(); }
     });
   });
 }
@@ -817,6 +1070,18 @@ function wireColormapSelector() {
   });
 }
 
+// ---- Wind density slider ----
+function wireWindDensity() {
+  const sl = document.getElementById('wp-density');
+  const val = document.getElementById('wp-count');
+  sl.addEventListener('input', () => {
+    windParticleCount = parseInt(sl.value);
+    val.textContent = windParticleCount.toLocaleString();
+    while (windParticles.length > windParticleCount) windParticles.pop();
+    while (windParticles.length < windParticleCount) windParticles.push(spawnParticle());
+  });
+}
+
 // ---- Data loading ----
 async function loadGeoJSON(path) {
   const r = await fetch(path);
@@ -826,15 +1091,14 @@ async function loadGeoJSON(path) {
 
 async function loadVectorData() {
   const base = 'data/qgis/';
-  const [mslp, lh, rivers, discharge, lightning, wind] = await Promise.all([
+  const [mslp, lh, rivers, discharge, lightning] = await Promise.all([
     loadGeoJSON(base + 'mslp-contours-v2.geojson'),
     loadGeoJSON(base + 'mslp-lh-markers.geojson'),
     loadGeoJSON(base + 'rivers-portugal.geojson'),
     loadGeoJSON(base + 'discharge-stations.geojson'),
     loadGeoJSON(base + 'lightning-kristin.geojson'),
-    loadGeoJSON(base + 'wind-barbs-kristin.geojson'),
   ]);
-  return { mslp, lh, rivers, discharge, lightning, wind };
+  return { mslp, lh, rivers, discharge, lightning };
 }
 
 // ---- Add MapLibre native layers (vectors only — rasters via deck.gl) ----
@@ -953,6 +1217,9 @@ function setDate(idx) {
     if (vis[key]) loadRasterForDate(key, date);
   }
 
+  // Load wind field for particles and/or barbs
+  if (vis.wp || vis.wind) loadWindFieldForCurrentDate();
+
   // Pre-fetch next frame
   const nextIdx = Math.min(idx + 1, 76);
   if (nextIdx !== idx) {
@@ -1022,7 +1289,7 @@ function wireToggles() {
     't-sm': 'sm', 't-pr': 'pr', 't-satir': 'satir', 't-mslpf': 'mslpf',
     't-mslp': 'mslp', 't-lh': 'lh',
     't-rivers': 'rivers', 't-discharge': 'discharge', 't-lightning': 'lightning',
-    't-arcs': 'arcs', 't-wind': 'wind',
+    't-arcs': 'arcs', 't-wind': 'wind', 't-wp': 'wp',
   };
   for (const [elId, key] of Object.entries(map)) {
     const el = document.getElementById(elId);
@@ -1051,7 +1318,6 @@ async function init() {
   // Start loading geotiff.js immediately (parallel with vector data)
   const geotiffReady = ensureGeoTIFF();
   const vectorData = await loadVectorData();
-  deckData.wind = vectorData.wind;
   await geotiffReady;
 
   mapInstance = new maplibregl.Map({
@@ -1074,6 +1340,7 @@ async function init() {
     wireColormapSelector();
     wireSatirHourSlider();
     wireMslpHourButtons();
+    wireWindDensity();
     renderStormMarkers();
 
     // Load first raster frame (soil moisture is checked by default)
