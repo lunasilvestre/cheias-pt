@@ -1,10 +1,32 @@
 {
   "name": "cheias-pt",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "npx serve -l 3000 -s --no-clipboard",
-    "serve": "bash scripts/serve.sh"
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@deck.gl/core": "^9.2",
+    "@deck.gl/geo-layers": "^9.2",
+    "@deck.gl/aggregation-layers": "^9.2",
+    "@deck.gl/mapbox": "^9.2",
+    "@maplibre/maplibre-gl-compare": "^0.5",
+    "d3-contour": "^4.0",
+    "d3-geo": "^3.1",
+    "geotiff": "^2.1",
+    "gsap": "^3.12",
+    "maplibre-gl": "^5.0",
+    "pmtiles": "^4.1",
+    "scrollama": "^3.2"
+  },
+  "devDependencies": {
+    "@types/d3-contour": "^3.0",
+    "@types/d3-geo": "^3.1",
+    "typescript": "^5.7",
+    "vite": "^6.1"
   }
 }
