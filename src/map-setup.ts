@@ -8,11 +8,13 @@
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Protocol } from 'pmtiles';
+import { MapboxOverlay } from '@deck.gl/mapbox';
 import type { ChapterCamera, ChapterAnimation } from './types';
 
 const BASEMAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
 
 let map: maplibregl.Map | null = null;
+let deckOverlay: MapboxOverlay | null = null;
 let navControl: maplibregl.NavigationControl | null = null;
 
 /**
@@ -40,7 +42,12 @@ export function initMap(containerId: string): maplibregl.Map {
     'bottom-right'
   );
 
+  // deck.gl overlay — layers added in later phases
+  deckOverlay = new MapboxOverlay({ layers: [] });
+  map.addControl(deckOverlay as unknown as maplibregl.IControl);
+
   console.log(`[cheias.pt] MapLibre GL v${map.version}`);
+  console.log('[cheias.pt] deck.gl MapboxOverlay attached');
 
   return map;
 }
@@ -50,6 +57,13 @@ export function initMap(containerId: string): maplibregl.Map {
  */
 export function getMap(): maplibregl.Map | null {
   return map;
+}
+
+/**
+ * Get the deck.gl overlay instance.
+ */
+export function getDeckOverlay(): MapboxOverlay | null {
+  return deckOverlay;
 }
 
 /**
