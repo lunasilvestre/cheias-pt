@@ -13,6 +13,11 @@ build/
 # ----- Node -----
 node_modules/
 
+# ----- Spike build artifacts -----
+spike-build/
+spike-deckgl-bundle.js
+spike-deckgl-bundle.js.map
+
 # ----- Jupyter -----
 .ipynb_checkpoints/
 
