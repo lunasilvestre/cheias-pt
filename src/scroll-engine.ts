@@ -119,24 +119,46 @@ export function leaveChapter0(): void {
   if (map) setLayerOpacity(map, 'ghost-flood-pulse', 0);
 }
 
-// Ch.1 scroll-driven opacity (driven from onStepProgress)
-function handleChapter1Progress(progress: number): void {
+// Ch.1 GSAP timeline choreography
+let ch1Timeline: gsap.core.Timeline | null = null;
+
+export function enterChapter1(): void {
   if (!map) return;
-  let opacity: number;
-  if (progress < 0.2) {
-    opacity = 0;
-  } else if (progress < 0.4) {
-    opacity = ((progress - 0.2) / 0.2) * 0.7;
-  } else if (progress < 0.8) {
-    opacity = 0.7;
-  } else {
-    opacity = 0.7 * (1 - (progress - 0.8) / 0.2);
+  ensureLayer(map, 'sentinel1-flood-extent');
+
+  const proxy = { opacity: 0 };
+  ch1Timeline = gsap.timeline();
+  ch1Timeline.to(proxy, {
+    opacity: 0.7,
+    duration: 2,
+    ease: 'power2.out',
+    onUpdate: () => {
+      if (map) setLayerOpacity(map, 'sentinel1-flood-extent', proxy.opacity);
+    },
+  });
+}
+
+export function leaveChapter1(): void {
+  if (ch1Timeline) {
+    ch1Timeline.kill();
+    ch1Timeline = null;
   }
-  setLayerOpacity(map, 'sentinel1-flood-extent', opacity);
+  if (!map) return;
+
+  const proxy = { opacity: 0.7 };
+  gsap.to(proxy, {
+    opacity: 0,
+    duration: 1,
+    ease: 'power2.in',
+    onUpdate: () => {
+      if (map) setLayerOpacity(map, 'sentinel1-flood-extent', proxy.opacity);
+    },
+  });
 }
 
 // ── Ch.2 Atlantic Engine ──
 
+let ch2Timeline: gsap.core.Timeline | null = null;
 let ch2IvtPlayer: TemporalPlayer | null = null;
 let ch2WindLayer: Layer | null = null;
 let ch2SstBitmap: ImageBitmap | null = null;
@@ -145,8 +167,6 @@ let ch2IvtBounds: [number, number, number, number] | null = null;
 let ch2IvtCurrentBitmap: ImageBitmap | null = null;
 let ch2Loaded = false;
 let ch2Loading = false;
-let ch2CameraPushed = false;
-let ch2BearingTween: gsap.core.Tween | null = null;
 let ch2SstOpacity = 0;
 let ch2IvtOpacity = 0;
 let ch2WindVisible = false;
@@ -264,17 +284,18 @@ export async function enterChapter2(): Promise<void> {
   ch2Loaded = true;
   ch2Loading = false;
   showDateLabel();
+  buildChapter2Timeline();
 }
 
 export function leaveChapter2(): void {
+  if (ch2Timeline) {
+    ch2Timeline.kill();
+    ch2Timeline = null;
+  }
+
   if (ch2IvtPlayer) {
     ch2IvtPlayer.destroy();
     ch2IvtPlayer = null;
-  }
-
-  if (ch2BearingTween) {
-    ch2BearingTween.kill();
-    ch2BearingTween = null;
   }
 
   // Release ImageBitmap GPU resources
@@ -292,7 +313,6 @@ export function leaveChapter2(): void {
   ch2WindVisible = false;
   ch2Loaded = false;
   ch2Loading = false;
-  ch2CameraPushed = false;
   setDeckOverlayLayers([]);
 
   if (map) {
@@ -303,67 +323,87 @@ export function leaveChapter2(): void {
   hideDateLabel();
 }
 
-function handleChapter2Progress(progress: number): void {
+/** Build the Ch.2 GSAP timeline that choreographs all layer reveals. */
+function buildChapter2Timeline(): void {
   if (!map) return;
 
-  // SST opacity ramp: 0→0.8 over 0.0–0.1, fade at 0.9–1.0
-  const rawSst = Math.min(progress / 0.1, 1) * 0.8;
-  ch2SstOpacity = progress < 0.9
-    ? rawSst
-    : rawSst * Math.max(0, 1 - (progress - 0.9) / 0.1);
+  ch2Timeline = gsap.timeline();
+  const sstProxy = { opacity: 0 };
+  const stormProxy = { opacity: 0 };
+  const bearingProxy = { value: 0 };
+  const ivtProxy = { opacity: 0 };
+  const windProxy = { opacity: 0 };
 
-  // Storm tracks fade in at 0.3–0.4, fade out at 0.9–1.0
-  if (progress >= 0.3) {
-    const rawStorm = Math.min((progress - 0.3) / 0.1, 1) * 0.9;
-    const stormOpacity = progress < 0.9
-      ? rawStorm
-      : rawStorm * Math.max(0, 1 - (progress - 0.9) / 0.1);
-    setLayerOpacity(map, 'storm-tracks', stormOpacity);
-    setLayerOpacity(map, 'storm-track-labels', stormOpacity);
-  } else {
-    setLayerOpacity(map, 'storm-tracks', 0);
-    setLayerOpacity(map, 'storm-track-labels', 0);
-  }
+  // 0s: SST fade in 0→0.8 (1.5s)
+  ch2Timeline.to(sstProxy, {
+    opacity: 0.8,
+    duration: 1.5,
+    ease: 'power2.out',
+    onUpdate: () => {
+      ch2SstOpacity = sstProxy.opacity;
+      rebuildCh2DeckLayers();
+    },
+  }, 0);
 
-  // Globe slight rotation at 0.4
-  if (progress >= 0.4 && progress < 0.5 && !ch2BearingTween) {
-    const bearingProxy = { value: 0 };
-    ch2BearingTween = gsap.to(bearingProxy, {
-      value: 5,
-      duration: 2,
-      ease: 'power2.out',
-      onUpdate: () => {
-        map?.easeTo({ bearing: bearingProxy.value, duration: 0 });
-      },
-    });
-  }
+  // +0.5s: Storm tracks fade in 0→0.9 (1s)
+  ch2Timeline.to(stormProxy, {
+    opacity: 0.9,
+    duration: 1,
+    ease: 'power2.out',
+    onUpdate: () => {
+      if (map) {
+        setLayerOpacity(map, 'storm-tracks', stormProxy.opacity);
+        setLayerOpacity(map, 'storm-track-labels', stormProxy.opacity);
+      }
+    },
+  }, 0.5);
 
-  // IVT player: play between 0.5–0.9, pause outside
-  if (progress >= 0.5 && progress < 0.9 && ch2IvtPlayer && ch2Loaded) {
-    ch2IvtPlayer.play();
-    ch2IvtOpacity = 0.7;
-  } else if (ch2IvtPlayer) {
-    ch2IvtPlayer.pause();
-    ch2IvtOpacity = progress >= 0.9
-      ? 0.7 * Math.max(0, 1 - (progress - 0.9) / 0.1)
-      : 0;
-  }
+  // +1s: Globe bearing rotation 0→5 (2s)
+  ch2Timeline.to(bearingProxy, {
+    value: 5,
+    duration: 2,
+    ease: 'power2.out',
+    onUpdate: () => {
+      map?.easeTo({ bearing: bearingProxy.value, duration: 0 });
+    },
+  }, 1);
 
-  // Wind particles: visible at 0.6–0.9
-  ch2WindVisible = progress >= 0.6 && progress < 0.9;
+  // +2s: IVT player starts, opacity 0→0.7 (1s)
+  ch2Timeline.to(ivtProxy, {
+    opacity: 0.7,
+    duration: 1,
+    ease: 'power2.out',
+    onStart: () => {
+      if (ch2IvtPlayer) ch2IvtPlayer.play();
+    },
+    onUpdate: () => {
+      ch2IvtOpacity = ivtProxy.opacity;
+      rebuildCh2DeckLayers();
+    },
+  }, 2);
 
-  // Camera push toward Portugal at 0.8
-  if (progress >= 0.8 && progress < 0.9 && !ch2CameraPushed) {
-    ch2CameraPushed = true;
-    map.easeTo({
+  // +3s: Wind particles visible, opacity 0→1 (1s)
+  ch2Timeline.to(windProxy, {
+    opacity: 1,
+    duration: 1,
+    ease: 'power2.out',
+    onStart: () => {
+      ch2WindVisible = true;
+    },
+    onUpdate: () => {
+      rebuildCh2DeckLayers();
+    },
+  }, 3);
+
+  // +6s: Camera push toward Portugal (4s)
+  ch2Timeline.call(() => {
+    map?.easeTo({
       center: [-15, 38],
       zoom: 3.5,
       duration: 4000,
       essential: true,
     });
-  }
-
-  rebuildCh2DeckLayers();
+  }, undefined, 6);
 }
 
 // Ch.3 sparkline + wildfire + percentile + precipitation state
@@ -696,16 +736,6 @@ export function initScrollObserver(
     .onStepProgress((response) => {
       const chapterId = response.element.dataset.chapter;
       if (!chapterId) return;
-
-      // Ch.1 scroll-driven flood opacity
-      if (chapterId === 'chapter-1') {
-        handleChapter1Progress(response.progress);
-      }
-
-      // Ch.2 Atlantic Engine scroll orchestration
-      if (chapterId === 'chapter-2') {
-        handleChapter2Progress(response.progress);
-      }
 
       // Ch.3 wildfire foreshadow + percentile + precipitation transition
       if (chapterId === 'chapter-3') {
