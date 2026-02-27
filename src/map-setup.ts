@@ -9,6 +9,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Protocol } from 'pmtiles';
 import { MapboxOverlay } from '@deck.gl/mapbox';
+import type { Layer } from '@deck.gl/core';
 import type { ChapterCamera, ChapterAnimation } from './types';
 
 const BASEMAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
@@ -64,6 +65,15 @@ export function getMap(): maplibregl.Map | null {
  */
 export function getDeckOverlay(): MapboxOverlay | null {
   return deckOverlay;
+}
+
+/**
+ * Set deck.gl layers on the overlay directly.
+ * Used by weather-layers and temporal player modules.
+ */
+export function setDeckOverlayLayers(layers: Layer[]): void {
+  if (!deckOverlay) return;
+  deckOverlay.setProps({ layers });
 }
 
 /**
