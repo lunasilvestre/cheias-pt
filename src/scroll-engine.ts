@@ -2,44 +2,15 @@
  * cheias.pt — Scroll engine
  *
  * Uses scrollama for scroll-driven chapter transitions.
- * Merges chapter wiring and temporal player logic.
+ * Manages chapter enter/leave lifecycle and temporal playback.
  */
 
 import scrollama from 'scrollama';
 import type { Map as MLMap } from 'maplibre-gl';
-import type { Chapter, ResolvedChapter, RasterFrame } from './types';
+import type { Chapter, ResolvedChapter, RasterManifest, TemporalConfig } from './types';
 import { loadRasterManifest, loadDischargeTimeseries } from './data-loader';
 import { ensureLayer, updateSourceData, updateImageSource } from './layer-manager';
-
-// ── Temporal player state ──
-
-let frames: RasterFrame[] = [];
-let currentFrameIndex = -1;
-let onFrameChange: ((frame: RasterFrame, idx: number) => void) | null = null;
-
-function setFrames(frameArray: RasterFrame[]): void {
-  frames = frameArray;
-  currentFrameIndex = -1;
-}
-
-function setProgress(progress: number): void {
-  if (frames.length === 0) return;
-  const idx = Math.min(Math.floor(progress * frames.length), frames.length - 1);
-  if (idx !== currentFrameIndex && idx >= 0) {
-    currentFrameIndex = idx;
-    if (onFrameChange) onFrameChange(frames[idx], idx);
-  }
-}
-
-function onFrame(callback: (frame: RasterFrame, idx: number) => void): void {
-  onFrameChange = callback;
-}
-
-function resetPlayer(): void {
-  frames = [];
-  currentFrameIndex = -1;
-  onFrameChange = null;
-}
+import { TemporalPlayer } from './temporal-player';
 
 // ── Scrollama instance ──
 
@@ -49,27 +20,13 @@ let activeChapterId: string | null = null;
 // ── Chapter wiring state ──
 
 let map: MLMap | null = null;
-let ch3Initialized = false;
-let ch4Initialized = false;
-const preloadedUrls = new Set<string>();
+const activePlayers = new Map<string, TemporalPlayer>();
 
 /**
  * Initialize the scroll engine with the map instance.
  */
 export function initScrollEngine(mapInstance: MLMap): void {
   map = mapInstance;
-}
-
-// ── Image preloading ──
-
-function preloadImages(rasterFrames: RasterFrame[]): void {
-  for (const frame of rasterFrames) {
-    const url = `data/${frame.url}`;
-    if (preloadedUrls.has(url)) continue;
-    preloadedUrls.add(url);
-    const img = new Image();
-    img.src = url;
-  }
 }
 
 // ── Date label helpers ──
@@ -104,56 +61,111 @@ function updateDateLabel(dateStr: string): void {
   el.textContent = `${d.getDate()} de ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
+// ── Player management ──
+
+function destroyPlayer(chapterId: string): void {
+  const player = activePlayers.get(chapterId);
+  if (player) {
+    player.destroy();
+    activePlayers.delete(chapterId);
+  }
+}
+
+function destroyAllPlayers(): void {
+  for (const [id] of activePlayers) {
+    destroyPlayer(id);
+  }
+}
+
+/**
+ * Get the active TemporalPlayer for a chapter, if any.
+ */
+export function getPlayer(chapterId: string): TemporalPlayer | undefined {
+  return activePlayers.get(chapterId);
+}
+
 // ── Chapter enter/leave handlers ──
 
 export async function enterChapter3(): Promise<void> {
   if (!map) return;
 
-  const manifest = await loadRasterManifest();
+  // Clean up any existing player for this chapter
+  destroyPlayer('chapter-3');
+
+  const manifest: RasterManifest = await loadRasterManifest();
   const smFrames = manifest.soil_moisture.frames;
 
   ensureLayer(map, 'soil-moisture-raster');
-  setFrames(smFrames);
-  preloadImages(smFrames.slice(0, 15));
 
-  onFrame((frame, idx) => {
+  // Build temporal config from manifest
+  const config: TemporalConfig = {
+    id: 'ch3-soil-moisture',
+    frameType: 'png',
+    mode: 'scroll-driven',
+    urls: smFrames.map(f => `data/${f.url}`),
+    dates: smFrames.map(f => f.date),
+    layerId: 'soil-moisture-raster',
+  };
+
+  const player = new TemporalPlayer('chapter-3', config);
+  activePlayers.set('chapter-3', player);
+
+  // Wire frame updates to MapLibre image source
+  player.onFrame((idx, date) => {
     if (!map) return;
-    updateImageSource(map, 'soil-moisture-raster', `data/${frame.url}`);
-    updateDateLabel(frame.date);
-    preloadImages(smFrames.slice(idx + 1, idx + 11));
+    const frame = smFrames[idx];
+    if (frame) {
+      updateImageSource(map, 'soil-moisture-raster', `data/${frame.url}`);
+    }
+    if (date) updateDateLabel(date);
   });
 
+  // Set initial frame
   if (smFrames.length > 0) {
     updateImageSource(map, 'soil-moisture-raster', `data/${smFrames[0].url}`);
     updateDateLabel(smFrames[0].date);
   }
 
   showDateLabel();
-  ch3Initialized = true;
 }
 
 export function leaveChapter3(): void {
-  resetPlayer();
+  destroyPlayer('chapter-3');
   hideDateLabel();
-  ch3Initialized = false;
 }
 
 export async function enterChapter4(): Promise<void> {
   if (!map) return;
-  if (ch3Initialized) leaveChapter3();
 
-  const manifest = await loadRasterManifest();
+  // Clean up ch3 if still active
+  if (activePlayers.has('chapter-3')) leaveChapter3();
+  // Clean up any existing ch4 player
+  destroyPlayer('chapter-4');
+
+  const manifest: RasterManifest = await loadRasterManifest();
   const precipFrames = manifest.precipitation.frames;
 
   ensureLayer(map, 'precipitation-raster');
-  setFrames(precipFrames);
-  preloadImages(precipFrames.slice(0, 15));
 
-  onFrame((frame, idx) => {
+  const config: TemporalConfig = {
+    id: 'ch4-precipitation',
+    frameType: 'png',
+    mode: 'scroll-driven',
+    urls: precipFrames.map(f => `data/${f.url}`),
+    dates: precipFrames.map(f => f.date),
+    layerId: 'precipitation-raster',
+  };
+
+  const player = new TemporalPlayer('chapter-4', config);
+  activePlayers.set('chapter-4', player);
+
+  player.onFrame((idx, date) => {
     if (!map) return;
-    updateImageSource(map, 'precipitation-raster', `data/${frame.url}`);
-    updateDateLabel(frame.date);
-    preloadImages(precipFrames.slice(idx + 1, idx + 11));
+    const frame = precipFrames[idx];
+    if (frame) {
+      updateImageSource(map, 'precipitation-raster', `data/${frame.url}`);
+    }
+    if (date) updateDateLabel(date);
   });
 
   if (precipFrames.length > 0) {
@@ -162,20 +174,18 @@ export async function enterChapter4(): Promise<void> {
   }
 
   showDateLabel();
-  ch4Initialized = true;
 }
 
 export function leaveChapter4(): void {
-  resetPlayer();
+  destroyPlayer('chapter-4');
   hideDateLabel();
-  ch4Initialized = false;
 }
 
 export async function enterChapter5(): Promise<void> {
   if (!map) return;
-  if (ch4Initialized) leaveChapter4();
+  if (activePlayers.has('chapter-4')) leaveChapter4();
 
-  const manifest = await loadRasterManifest();
+  const manifest: RasterManifest = await loadRasterManifest();
   ensureLayer(map, 'soil-moisture-raster');
   const jan28Frame = manifest.soil_moisture.frames.find(f => f.date === '2026-01-28');
   if (jan28Frame) {
@@ -207,8 +217,8 @@ export async function enterChapter5(): Promise<void> {
 
 export async function enterChapter9(): Promise<void> {
   if (!map) return;
-  if (ch3Initialized) leaveChapter3();
-  if (ch4Initialized) leaveChapter4();
+  destroyAllPlayers();
+  hideDateLabel();
 
   ensureLayer(map, 'soil-moisture-tiles');
   ensureLayer(map, 'precipitation-tiles');
@@ -280,12 +290,10 @@ export function initScrollObserver(
       const chapterId = response.element.dataset.chapter;
       if (!chapterId) return;
 
-      // Drive temporal animation for chapters 3 and 4 via scroll progress
-      if (chapterId === 'chapter-3' && ch3Initialized) {
-        setProgress(response.progress);
-      }
-      if (chapterId === 'chapter-4' && ch4Initialized) {
-        setProgress(response.progress);
+      // Drive scroll-driven temporal players
+      const player = activePlayers.get(chapterId);
+      if (player) {
+        player.setScrollProgress(response.progress);
       }
     });
 
@@ -304,5 +312,6 @@ export function destroyScrollObserver(): void {
     scroller.destroy();
     scroller = null;
   }
+  destroyAllPlayers();
   activeChapterId = null;
 }

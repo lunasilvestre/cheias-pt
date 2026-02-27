@@ -7,7 +7,10 @@
 
 import maplibregl from 'maplibre-gl';
 import type { Map as MLMap } from 'maplibre-gl';
+import { BitmapLayer, ColumnLayer } from '@deck.gl/layers';
+import { gsap } from 'gsap';
 import type { LayerDef, ResolvedChapter } from './types';
+import { getDeckOverlay } from './map-setup';
 
 const registeredLayers = new Set<string>();
 const activeLayers = new Set<string>();
@@ -525,4 +528,146 @@ function getOpacityProperty(type: string): string | null {
     case 'raster': return 'raster-opacity';
     default: return null;
   }
+}
+
+// ── deck.gl BitmapLayer for COG rendering ──
+
+/** Active deck.gl layers managed by this module */
+const deckLayers = new Map<string, BitmapLayer>();
+
+/**
+ * Create a deck.gl BitmapLayer from a colormapped ImageBitmap.
+ * Bounds format: [west, south, east, north].
+ */
+export function createRasterBitmapLayer(
+  id: string,
+  imageBitmap: ImageBitmap,
+  bounds: [number, number, number, number],
+  opacity = 1,
+): BitmapLayer {
+  const [west, south, east, north] = bounds;
+  const layer = new BitmapLayer({
+    id,
+    image: imageBitmap,
+    bounds: [west, south, east, north],
+    opacity,
+  });
+
+  deckLayers.set(id, layer);
+  syncDeckLayers();
+  return layer;
+}
+
+/**
+ * Remove a deck.gl BitmapLayer by id.
+ */
+export function removeDeckLayer(id: string): void {
+  deckLayers.delete(id);
+  syncDeckLayers();
+}
+
+/**
+ * Crossfade between two BitmapLayers using GSAP opacity tween.
+ * The outgoing layer fades out while the incoming layer fades in.
+ */
+export function crossfadeRasters(
+  fromId: string,
+  toId: string,
+  toImageBitmap: ImageBitmap,
+  bounds: [number, number, number, number],
+  duration = 0.5,
+): Promise<void> {
+  return new Promise((resolve) => {
+    const [west, south, east, north] = bounds;
+    const progress = { t: 0 };
+
+    gsap.to(progress, {
+      t: 1,
+      duration,
+      ease: 'power2.inOut',
+      onUpdate: () => {
+        // Update both layers with interpolated opacity
+        const fromLayer = new BitmapLayer({
+          id: fromId,
+          image: deckLayers.get(fromId)?.props.image as ImageBitmap,
+          bounds: deckLayers.get(fromId)?.props.bounds as [number, number, number, number] ?? [west, south, east, north],
+          opacity: 1 - progress.t,
+        });
+        const toLayer = new BitmapLayer({
+          id: toId,
+          image: toImageBitmap,
+          bounds: [west, south, east, north],
+          opacity: progress.t,
+        });
+        deckLayers.set(fromId, fromLayer);
+        deckLayers.set(toId, toLayer);
+        syncDeckLayers();
+      },
+      onComplete: () => {
+        deckLayers.delete(fromId);
+        syncDeckLayers();
+        resolve();
+      },
+    });
+  });
+}
+
+/**
+ * Push all managed deck.gl layers to the overlay.
+ */
+function syncDeckLayers(): void {
+  const overlay = getDeckOverlay();
+  if (!overlay) return;
+  overlay.setProps({ layers: Array.from(deckLayers.values()) });
+}
+
+/**
+ * Set arbitrary deck.gl layers on the overlay (used by weather-layers and temporal player).
+ */
+export function setDeckLayers(layers: BitmapLayer[]): void {
+  // Merge with managed layers: external layers take IDs not in deckLayers
+  const overlay = getDeckOverlay();
+  if (!overlay) return;
+  const managed = Array.from(deckLayers.values());
+  overlay.setProps({ layers: [...managed, ...layers] });
+}
+
+// ── deck.gl ColumnLayer for discharge ──
+
+interface DischargeStation {
+  name: string;
+  basin: string;
+  lat: number;
+  lon: number;
+  peak_ratio: number;
+  peak_discharge: number;
+}
+
+/**
+ * Create extruded 3D columns for river discharge stations.
+ * Column height encodes peak discharge ratio; color encodes severity.
+ */
+export function createDischargeColumns(
+  stations: DischargeStation[],
+  id = 'discharge-columns',
+): ColumnLayer<DischargeStation> {
+  const layer = new ColumnLayer<DischargeStation>({
+    id,
+    data: stations,
+    diskResolution: 12,
+    radius: 4000,
+    extruded: true,
+    getPosition: (d) => [d.lon, d.lat],
+    getElevation: (d) => d.peak_ratio * 5000,
+    getFillColor: (d) => {
+      if (d.peak_ratio > 8) return [183, 28, 28, 220];   // deep red
+      if (d.peak_ratio > 5) return [231, 76, 60, 200];    // red
+      if (d.peak_ratio > 3) return [247, 153, 31, 180];   // orange
+      return [33, 102, 172, 160];                          // blue
+    },
+    pickable: true,
+    opacity: 0.9,
+  });
+
+  return layer;
 }
