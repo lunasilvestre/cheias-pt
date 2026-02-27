@@ -8,9 +8,13 @@
 import scrollama from 'scrollama';
 import { gsap } from 'gsap';
 import type { Map as MLMap } from 'maplibre-gl';
+import { BitmapLayer } from '@deck.gl/layers';
+import type { Layer } from '@deck.gl/core';
 import type { Chapter, ResolvedChapter, RasterManifest, TemporalConfig } from './types';
-import { loadRasterManifest, loadDischargeTimeseries, loadJSON } from './data-loader';
+import { loadRasterManifest, loadDischargeTimeseries, loadJSON, loadCOG, applyColormap, rasterToImageBitmap } from './data-loader';
 import { ensureLayer, setLayerOpacity, updateSourceData, updateImageSource } from './layer-manager';
+import { setDeckOverlayLayers } from './map-setup';
+import { compositeUV, createWindParticles } from './weather-layers';
 import { TemporalPlayer } from './temporal-player';
 
 // ── Scrollama instance ──
@@ -129,6 +133,237 @@ function handleChapter1Progress(progress: number): void {
     opacity = 0.7 * (1 - (progress - 0.8) / 0.2);
   }
   setLayerOpacity(map, 'sentinel1-flood-extent', opacity);
+}
+
+// ── Ch.2 Atlantic Engine ──
+
+let ch2IvtPlayer: TemporalPlayer | null = null;
+let ch2WindLayer: Layer | null = null;
+let ch2SstBitmap: ImageBitmap | null = null;
+let ch2SstBounds: [number, number, number, number] | null = null;
+let ch2IvtBounds: [number, number, number, number] | null = null;
+let ch2IvtCurrentBitmap: ImageBitmap | null = null;
+let ch2Loaded = false;
+let ch2Loading = false;
+let ch2CameraPushed = false;
+let ch2BearingTween: gsap.core.Tween | null = null;
+let ch2SstOpacity = 0;
+let ch2IvtOpacity = 0;
+let ch2WindVisible = false;
+
+/** Rebuild the deck.gl layer array from current Ch.2 state and push to overlay. */
+function rebuildCh2DeckLayers(): void {
+  const layers: Layer[] = [];
+
+  if (ch2SstBitmap && ch2SstBounds) {
+    layers.push(new BitmapLayer({
+      id: 'ch2-sst',
+      image: ch2SstBitmap,
+      bounds: ch2SstBounds,
+      opacity: ch2SstOpacity,
+    }));
+  }
+
+  if (ch2IvtCurrentBitmap && ch2IvtBounds) {
+    layers.push(new BitmapLayer({
+      id: 'ch2-ivt',
+      image: ch2IvtCurrentBitmap,
+      bounds: ch2IvtBounds,
+      opacity: ch2IvtOpacity,
+    }));
+  }
+
+  if (ch2WindLayer && ch2WindVisible) {
+    layers.push(ch2WindLayer);
+  }
+
+  setDeckOverlayLayers(layers);
+}
+
+export async function enterChapter2(): Promise<void> {
+  if (!map || ch2Loading) return;
+  ch2Loading = true;
+
+  // Clean up any leftover state
+  leaveChapter2();
+  ch2Loading = true; // re-set after leaveChapter2 clears it
+
+  // Ensure MapLibre storm track layers are registered
+  ensureLayer(map, 'storm-tracks');
+  ensureLayer(map, 'storm-track-labels');
+
+  // 1. Load SST COG (single representative mid-January frame)
+  try {
+    const sstRaster = await loadCOG('data/cog/sst/2026-01-15.tif');
+    const sstImageData = applyColormap(sstRaster, 'sst-diverging');
+    ch2SstBitmap = await rasterToImageBitmap(sstImageData);
+    ch2SstBounds = sstRaster.bounds;
+    rebuildCh2DeckLayers();
+  } catch (err) {
+    console.warn('[scroll-engine] Failed to load SST COG:', err);
+  }
+
+  // 2. Get IVT bounds from first COG, then create TemporalPlayer
+  try {
+    const firstIvt = await loadCOG('data/cog/ivt/2025-12-01.tif');
+    ch2IvtBounds = firstIvt.bounds;
+  } catch (err) {
+    console.warn('[scroll-engine] Failed to read IVT bounds:', err);
+    ch2IvtBounds = ch2SstBounds; // fallback
+  }
+
+  // Build IVT frame URLs (78 daily COGs Dec 1 → Feb 16)
+  const ivtUrls: string[] = [];
+  const ivtDates: string[] = [];
+  const startDate = new Date('2025-12-01');
+  for (let i = 0; i < 78; i++) {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + i);
+    const dateStr = d.toISOString().slice(0, 10);
+    ivtUrls.push(`data/cog/ivt/${dateStr}.tif`);
+    ivtDates.push(dateStr);
+  }
+
+  ch2IvtPlayer = new TemporalPlayer('chapter-2-ivt', {
+    id: 'ch2-ivt',
+    frameType: 'cog',
+    mode: 'autoplay',
+    fps: 2,
+    loop: true,
+    urls: ivtUrls,
+    dates: ivtDates,
+    paletteId: 'ivt-sequential',
+  });
+
+  ch2IvtPlayer.onImage((bitmap) => {
+    ch2IvtCurrentBitmap = bitmap;
+    rebuildCh2DeckLayers();
+  });
+
+  ch2IvtPlayer.onFrame((_idx, date) => {
+    if (date) updateDateLabel(date);
+  });
+
+  // Start loading IVT frames in background (78 COGs)
+  ch2IvtPlayer.load().catch(err => {
+    console.warn('[scroll-engine] IVT loading failed:', err);
+  });
+
+  // 3. Load wind particle field (Kristin peak, static)
+  try {
+    const [windU, windV] = await Promise.all([
+      loadCOG('data/cog/wind-u/2026-01-28T12.tif'),
+      loadCOG('data/cog/wind-v/2026-01-28T12.tif'),
+    ]);
+    const windData = compositeUV(windU, windV);
+    ch2WindLayer = createWindParticles(windData, windU.bounds, 'ch2-wind');
+  } catch (err) {
+    console.warn('[scroll-engine] Failed to load wind COGs:', err);
+  }
+
+  ch2Loaded = true;
+  ch2Loading = false;
+  showDateLabel();
+}
+
+export function leaveChapter2(): void {
+  if (ch2IvtPlayer) {
+    ch2IvtPlayer.destroy();
+    ch2IvtPlayer = null;
+  }
+
+  if (ch2BearingTween) {
+    ch2BearingTween.kill();
+    ch2BearingTween = null;
+  }
+
+  // Release ImageBitmap GPU resources
+  if (ch2SstBitmap) {
+    ch2SstBitmap.close();
+    ch2SstBitmap = null;
+  }
+  ch2IvtCurrentBitmap = null; // owned by TemporalPlayer, closed by its destroy()
+
+  ch2WindLayer = null;
+  ch2SstBounds = null;
+  ch2IvtBounds = null;
+  ch2SstOpacity = 0;
+  ch2IvtOpacity = 0;
+  ch2WindVisible = false;
+  ch2Loaded = false;
+  ch2Loading = false;
+  ch2CameraPushed = false;
+  setDeckOverlayLayers([]);
+
+  if (map) {
+    setLayerOpacity(map, 'storm-tracks', 0);
+    setLayerOpacity(map, 'storm-track-labels', 0);
+  }
+
+  hideDateLabel();
+}
+
+function handleChapter2Progress(progress: number): void {
+  if (!map) return;
+
+  // SST opacity ramp: 0→0.8 over 0.0–0.1, fade at 0.9–1.0
+  const rawSst = Math.min(progress / 0.1, 1) * 0.8;
+  ch2SstOpacity = progress < 0.9
+    ? rawSst
+    : rawSst * Math.max(0, 1 - (progress - 0.9) / 0.1);
+
+  // Storm tracks fade in at 0.3–0.4, fade out at 0.9–1.0
+  if (progress >= 0.3) {
+    const rawStorm = Math.min((progress - 0.3) / 0.1, 1) * 0.9;
+    const stormOpacity = progress < 0.9
+      ? rawStorm
+      : rawStorm * Math.max(0, 1 - (progress - 0.9) / 0.1);
+    setLayerOpacity(map, 'storm-tracks', stormOpacity);
+    setLayerOpacity(map, 'storm-track-labels', stormOpacity);
+  } else {
+    setLayerOpacity(map, 'storm-tracks', 0);
+    setLayerOpacity(map, 'storm-track-labels', 0);
+  }
+
+  // Globe slight rotation at 0.4
+  if (progress >= 0.4 && progress < 0.5 && !ch2BearingTween) {
+    const bearingProxy = { value: 0 };
+    ch2BearingTween = gsap.to(bearingProxy, {
+      value: 5,
+      duration: 2,
+      ease: 'power2.out',
+      onUpdate: () => {
+        map?.easeTo({ bearing: bearingProxy.value, duration: 0 });
+      },
+    });
+  }
+
+  // IVT player: play between 0.5–0.9, pause outside
+  if (progress >= 0.5 && progress < 0.9 && ch2IvtPlayer && ch2Loaded) {
+    ch2IvtPlayer.play();
+    ch2IvtOpacity = 0.7;
+  } else if (ch2IvtPlayer) {
+    ch2IvtPlayer.pause();
+    ch2IvtOpacity = progress >= 0.9
+      ? 0.7 * Math.max(0, 1 - (progress - 0.9) / 0.1)
+      : 0;
+  }
+
+  // Wind particles: visible at 0.6–0.9
+  ch2WindVisible = progress >= 0.6 && progress < 0.9;
+
+  // Camera push toward Portugal at 0.8
+  if (progress >= 0.8 && progress < 0.9 && !ch2CameraPushed) {
+    ch2CameraPushed = true;
+    map.easeTo({
+      center: [-15, 38],
+      zoom: 3.5,
+      duration: 4000,
+      essential: true,
+    });
+  }
+
+  rebuildCh2DeckLayers();
 }
 
 // Ch.3 sparkline + wildfire + percentile + precipitation state
@@ -465,6 +700,11 @@ export function initScrollObserver(
       // Ch.1 scroll-driven flood opacity
       if (chapterId === 'chapter-1') {
         handleChapter1Progress(response.progress);
+      }
+
+      // Ch.2 Atlantic Engine scroll orchestration
+      if (chapterId === 'chapter-2') {
+        handleChapter2Progress(response.progress);
       }
 
       // Ch.3 wildfire foreshadow + percentile + precipitation transition

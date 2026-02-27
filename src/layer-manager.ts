@@ -226,8 +226,38 @@ const LAYER_DEFS: Record<string, LayerDef> = {
     'source-layer': 'wildfires',
     paint: { 'fill-color': '#c0631a', 'fill-opacity': 0 },
   },
-  'sst-anomaly': { stub: true, type: 'raster', paint: {} },
-  'atmospheric-river-track': { stub: true, type: 'line', paint: {} },
+  'storm-tracks': {
+    type: 'line',
+    source: { type: 'geojson', data: 'data/qgis/storm-tracks-auto.geojson' },
+    paint: {
+      'line-color': [
+        'match', ['get', 'name'],
+        'Kristin', '#ff6464',
+        'Leonardo', '#64b5f6',
+        'Marta', '#ffc864',
+        '#ffffff',
+      ],
+      'line-width': 2.5,
+      'line-opacity': 0,
+    },
+  },
+  'storm-track-labels': {
+    type: 'symbol',
+    sourceRef: 'storm-tracks',
+    layout: {
+      'symbol-placement': 'line-center',
+      'text-field': ['get', 'name'],
+      'text-size': 13,
+      'text-font': ['Open Sans Regular'],
+      'text-allow-overlap': true,
+    },
+    paint: {
+      'text-color': '#ffffff',
+      'text-opacity': 0,
+      'text-halo-color': '#000000',
+      'text-halo-width': 1,
+    },
+  },
   'ipma-warnings-timeline': { stub: true, type: 'line', paint: {} },
   'satellite-after': { stub: true, type: 'raster', paint: {} },
 };

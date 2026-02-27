@@ -16,6 +16,8 @@ import {
   initScrollEngine,
   enterChapter0,
   leaveChapter0,
+  enterChapter2,
+  leaveChapter2,
   enterChapter3,
   leaveChapter3,
   enterChapter4,
@@ -63,6 +65,9 @@ function onChapterEnter(chapterId: string, config: ResolvedChapter): void {
 
   if (previousChapterId === 'chapter-0' && chapterId !== 'chapter-0') {
     leaveChapter0();
+  }
+  if (previousChapterId === 'chapter-2' && chapterId !== 'chapter-2') {
+    leaveChapter2();
   }
   if (previousChapterId === 'chapter-3' && chapterId !== 'chapter-3') {
     leaveChapter3();
@@ -117,6 +122,7 @@ function onChapterEnter(chapterId: string, config: ResolvedChapter): void {
   }
 
   if (chapterId === 'chapter-0') enterChapter0();
+  if (chapterId === 'chapter-2') enterChapter2();
   if (chapterId === 'chapter-3') enterChapter3();
   if (chapterId === 'chapter-4') enterChapter4();
   if (chapterId === 'chapter-5') enterChapter5();
