@@ -106,8 +106,15 @@ data/cache/
 data/qgis/
 data/static-images/
 
+# -- Basemap/colormap screenshots (QGIS renders) --
+data/basemap/screenshots/
+data/colormaps/screenshots/
+
 # ===========================================
 # Tracked inside data/ (NOT ignored)
 # ===========================================
 # sync.sh  — rclone sync scripts (this file pattern doesn't match above)
 # README.md — documentation (doesn't match above)
+# Cartographic design docs (override data/**/*.json):
+!data/basemap/cheias-dark.json
+!data/colormaps/palette.json
