@@ -24,7 +24,7 @@ mapping activated (EMSR861, EMSR864).
 | Phase | Focus | Status |
 |-------|-------|--------|
 | 0 | Vite scaffold + scroll engine port | **DONE** — merged to main |
-| 1 | Data pipelines (PNGs, frontal GeoJSONs, Sentinel-2) | **NEXT** |
+| 1 | Data pipelines (PNGs, frontal GeoJSONs, Sentinel-2) | **NEXT** — prompt at `prompts/phase-1-data-layers.md` |
 | 2 | Core narrative effects (WeatherLayers GL, globe, 3D) | Pending |
 | 3 | Polish (responsive, a11y, exploration mode) | Pending |
 
@@ -62,6 +62,7 @@ the current phase, note it in `todo.md` and move on.
 |------|-------|
 | **v2 plan (source of truth)** | `prompts/creative-direction-plan-v2.md` |
 | Phase 0 prompt | `prompts/phase-0-vite-port.md` |
+| Phase 1 prompt | `prompts/phase-1-data-layers.md` |
 | Sprint overview | `prompts/sprint-creative-v2.md` |
 | Data catalogue (complete inventory) | `prompts/creative-reports/data-catalogue.md` |
 | Library compatibility matrix | `prompts/creative-reports/library-compatibility.md` |
