@@ -212,11 +212,11 @@ export async function enterChapter2(): Promise<void> {
     ch2IvtBounds = ch2SstBounds; // fallback
   }
 
-  // Build IVT frame URLs (78 daily COGs Dec 1 → Feb 16)
+  // Build IVT frame URLs (77 daily COGs Dec 1 → Feb 15)
   const ivtUrls: string[] = [];
   const ivtDates: string[] = [];
   const startDate = new Date('2025-12-01');
-  for (let i = 0; i < 78; i++) {
+  for (let i = 0; i < 77; i++) {
     const d = new Date(startDate);
     d.setDate(d.getDate() + i);
     const dateStr = d.toISOString().slice(0, 10);
