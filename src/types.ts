@@ -40,6 +40,8 @@ export interface ChapterSubstep {
   animation: ChapterAnimation;
 }
 
+export type BasemapMood = 'ultra-dark' | 'dark-ocean' | 'muted-terrain' | 'dark-synoptic' | 'terrain-hydro' | 'aerial-hybrid';
+
 export interface Chapter {
   id: string;
   title: string;
@@ -56,6 +58,9 @@ export interface Chapter {
   byline?: string;
   substeps?: ChapterSubstep[];
   cta?: CTAButton[];
+  basemapMood?: BasemapMood;
+  projection?: 'globe' | 'mercator';
+  terrain?: { exaggeration: number } | false;
 }
 
 /** Resolved chapter config passed to callbacks (includes substep merged data) */

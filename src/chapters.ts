@@ -22,6 +22,9 @@ export const chapters: Chapter[] = [
     source: null,
     onEnter: null,
     onLeave: null,
+    basemapMood: 'ultra-dark',
+    projection: 'globe',
+    terrain: false,
   },
   {
     id: 'chapter-1',
@@ -39,6 +42,8 @@ export const chapters: Chapter[] = [
     source: 'Dados: Copernicus Sentinel-1 / CEMS Rapid Mapping (EMSR864)',
     onEnter: null,
     onLeave: null,
+    basemapMood: 'ultra-dark',
+    terrain: false,
   },
   {
     id: 'chapter-2',
@@ -56,6 +61,9 @@ export const chapters: Chapter[] = [
     source: 'Dados: NOAA SST Anomalies / ERA5 Reanalysis',
     onEnter: null,
     onLeave: null,
+    basemapMood: 'dark-ocean',
+    projection: 'globe',
+    terrain: false,
   },
   {
     id: 'chapter-3',
@@ -76,6 +84,9 @@ export const chapters: Chapter[] = [
     source: 'Dados: Open-Meteo / ERA5-Land Soil Moisture (0-30cm)',
     onEnter: null,
     onLeave: null,
+    basemapMood: 'muted-terrain',
+    projection: 'mercator',
+    terrain: false,
   },
   {
     id: 'chapter-4',
@@ -99,6 +110,8 @@ export const chapters: Chapter[] = [
     source: 'Dados: Open-Meteo / ERA5 Precipitation / IPMA',
     onEnter: null,
     onLeave: null,
+    basemapMood: 'dark-synoptic',
+    terrain: false,
   },
   {
     id: 'chapter-5',
@@ -122,6 +135,8 @@ export const chapters: Chapter[] = [
     source: 'Dados: GloFAS / Open-Meteo Flood API',
     onEnter: null,
     onLeave: null,
+    basemapMood: 'terrain-hydro',
+    terrain: { exaggeration: 1.5 },
   },
   {
     id: 'chapter-6',
@@ -143,6 +158,8 @@ export const chapters: Chapter[] = [
       { title: 'Deslizamentos', color: '#795548', type: 'circle' },
     ],
     source: 'Dados: CEMS Rapid Mapping (EMSR861, EMSR864)',
+    basemapMood: 'aerial-hybrid',
+    terrain: { exaggeration: 1.2 },
     substeps: [
       {
         id: 'chapter-6a',
@@ -195,6 +212,8 @@ export const chapters: Chapter[] = [
     source: null,
     onEnter: null,
     onLeave: null,
+    basemapMood: 'ultra-dark',
+    terrain: false,
   },
   {
     id: 'chapter-8',
@@ -216,6 +235,8 @@ export const chapters: Chapter[] = [
     source: null,
     onEnter: null,
     onLeave: null,
+    basemapMood: 'muted-terrain',
+    terrain: false,
   },
   {
     id: 'chapter-9',
@@ -235,5 +256,7 @@ export const chapters: Chapter[] = [
     ],
     onEnter: 'enableExploration',
     onLeave: 'disableExploration',
+    basemapMood: 'terrain-hydro',
+    terrain: false,
   },
 ];

@@ -7,7 +7,7 @@
 
 import maplibregl from 'maplibre-gl';
 import type { Map as MLMap } from 'maplibre-gl';
-import { BitmapLayer } from '@deck.gl/layers';
+import { BitmapLayer, ColumnLayer } from '@deck.gl/layers';
 import { gsap } from 'gsap';
 import type { LayerDef, ResolvedChapter } from './types';
 import { getDeckOverlay } from './map-setup';
@@ -630,4 +630,44 @@ export function setDeckLayers(layers: BitmapLayer[]): void {
   if (!overlay) return;
   const managed = Array.from(deckLayers.values());
   overlay.setProps({ layers: [...managed, ...layers] });
+}
+
+// ── deck.gl ColumnLayer for discharge ──
+
+interface DischargeStation {
+  name: string;
+  basin: string;
+  lat: number;
+  lon: number;
+  peak_ratio: number;
+  peak_discharge: number;
+}
+
+/**
+ * Create extruded 3D columns for river discharge stations.
+ * Column height encodes peak discharge ratio; color encodes severity.
+ */
+export function createDischargeColumns(
+  stations: DischargeStation[],
+  id = 'discharge-columns',
+): ColumnLayer<DischargeStation> {
+  const layer = new ColumnLayer<DischargeStation>({
+    id,
+    data: stations,
+    diskResolution: 12,
+    radius: 4000,
+    extruded: true,
+    getPosition: (d) => [d.lon, d.lat],
+    getElevation: (d) => d.peak_ratio * 5000,
+    getFillColor: (d) => {
+      if (d.peak_ratio > 8) return [183, 28, 28, 220];   // deep red
+      if (d.peak_ratio > 5) return [231, 76, 60, 200];    // red
+      if (d.peak_ratio > 3) return [247, 153, 31, 180];   // orange
+      return [33, 102, 172, 160];                          // blue
+    },
+    pickable: true,
+    opacity: 0.9,
+  });
+
+  return layer;
 }

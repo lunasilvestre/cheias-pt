@@ -7,7 +7,10 @@
 
 import '../css/style.css';
 import { chapters } from './chapters';
-import { initMap, flyToChapter, getMap } from './map-setup';
+import {
+  initMap, flyToChapter, getMap,
+  setProjection, enableTerrain, disableTerrain, switchBasemapMood,
+} from './map-setup';
 import {
   initScrollObserver,
   initScrollEngine,
@@ -63,6 +66,19 @@ function onChapterEnter(chapterId: string, config: ResolvedChapter): void {
     leaveChapter4();
   }
   previousChapterId = chapterId;
+
+  // Basemap mood, projection, terrain
+  if (config.basemapMood) {
+    switchBasemapMood(config.basemapMood);
+  }
+  if (config.projection) {
+    setProjection(config.projection);
+  }
+  if (config.terrain && typeof config.terrain === 'object') {
+    enableTerrain(config.terrain.exaggeration);
+  } else {
+    disableTerrain();
+  }
 
   if (config.camera && config.animation) {
     flyToChapter(config.camera, config.animation);
