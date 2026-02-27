@@ -392,6 +392,78 @@ html {
   }
 }
 
+/* --- Hero Stats --- */
+.hero__stats {
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 300;
+  color: #a0afb8;
+  margin-bottom: 12px;
+  letter-spacing: 0.3px;
+}
+
+.hero__stats span[data-count-target] {
+  font-weight: 500;
+  color: #ffffff;
+}
+
+/* --- Chapter 3: Sparkline Panel --- */
+.sparkline-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.sparkline-panel:empty {
+  display: none;
+}
+
+.sparkline-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sparkline-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: #607080;
+  min-width: 70px;
+  text-align: right;
+}
+
+.sparkline-item svg {
+  display: block;
+}
+
+/* --- Chapter 3: Percentile Annotation --- */
+.ch3-annotation {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(9, 20, 26, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: #a0afb8;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.ch3-annotation.visible {
+  opacity: 1;
+}
+
 /* --- Chapter 2: Moisture Arrow --- */
 .chapter__moisture-arrow {
   margin: 16px 0;

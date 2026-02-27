@@ -17,7 +17,9 @@ export const chapters: Chapter[] = [
     alignment: 'fully',
     camera: { center: [-15, 35], zoom: 3, pitch: 0, bearing: 0 },
     animation: { type: 'flyTo', duration: 0 },
-    layers: [],
+    layers: [
+      { id: 'ghost-flood-pulse', opacity: 0, type: 'geojson' },
+    ],
     legend: [],
     source: null,
     onEnter: null,
@@ -35,10 +37,10 @@ export const chapters: Chapter[] = [
     camera: { center: [-8.5, 39.5], zoom: 6.5, pitch: 15, bearing: 5 },
     animation: { type: 'flyTo', duration: 3000 },
     layers: [
-      { id: 'sentinel1-flood-extent', opacity: 0.8, type: 'geojson' },
+      { id: 'sentinel1-flood-extent', opacity: 0, type: 'geojson' },
       { id: 'portugal-outline', opacity: 0.3, type: 'geojson' },
     ],
-    legend: [{ title: 'Área inundada', color: '#e74c3c', type: 'fill' }],
+    legend: [{ title: 'Área inundada', color: '#2471a3', type: 'fill' }],
     source: 'Dados: Copernicus Sentinel-1 / CEMS Rapid Mapping (EMSR864)',
     onEnter: null,
     onLeave: null,

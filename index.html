@@ -43,6 +43,9 @@
       <div class="chapter__content">
         <h1 class="hero__title">O Inverno Que Partiu os Rios</h1>
         <p class="hero__subtitle">Como três tempestades expuseram a fragilidade de Portugal</p>
+        <p class="hero__stats">
+          <span data-count-target="226764">226.764</span> hectares inundados · <span data-count-target="11">11</span> mortes · <span data-count-target="69">69</span> municípios em calamidade
+        </p>
         <p class="hero__byline">cheias.pt · Uma história contada com dados de satélite e modelos hidrológicos</p>
         <div class="hero__scroll-hint">
           <span class="scroll-hint__arrow"></span>
@@ -101,6 +104,7 @@
           <h2 class="chapter__title">O Solo Encharca</h2>
           <p id="ch3-date-label" class="chapter__date-label"></p>
           <p class="chapter__text">Antes de qualquer tempestade, o solo já estava a encher. Semanas de chuva persistente saturaram os primeiros 30 centímetros de terra — a camada que absorve a chuva e impede cheias. Quando Kristin chegou em Janeiro, o solo já não tinha para onde mandar a água. Cada gota adicional ia directamente para os rios.</p>
+          <div id="ch3-sparklines" class="sparkline-panel"></div>
           <div class="chapter__legend">
             <div class="legend-item">
               <span class="legend-swatch" style="background: #a6611a;"></span>
@@ -113,6 +117,10 @@
           </div>
           <p class="chapter__source">Dados: Open-Meteo / ERA5-Land Soil Moisture (0-30cm)</p>
         </div>
+      </div>
+      <!-- Percentile annotation overlay -->
+      <div id="ch3-percentile" class="ch3-annotation">
+        Percentil 98 — solo mais saturado que em 98% dos invernos desde 1991
       </div>
     </section>
 

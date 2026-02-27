@@ -14,6 +14,8 @@ import {
 import {
   initScrollObserver,
   initScrollEngine,
+  enterChapter0,
+  leaveChapter0,
   enterChapter3,
   leaveChapter3,
   enterChapter4,
@@ -59,6 +61,9 @@ function main(): void {
 function onChapterEnter(chapterId: string, config: ResolvedChapter): void {
   console.log(`[cheias.pt] Chapter: ${chapterId}`);
 
+  if (previousChapterId === 'chapter-0' && chapterId !== 'chapter-0') {
+    leaveChapter0();
+  }
   if (previousChapterId === 'chapter-3' && chapterId !== 'chapter-3') {
     leaveChapter3();
   }
@@ -111,6 +116,7 @@ function onChapterEnter(chapterId: string, config: ResolvedChapter): void {
     }
   }
 
+  if (chapterId === 'chapter-0') enterChapter0();
   if (chapterId === 'chapter-3') enterChapter3();
   if (chapterId === 'chapter-4') enterChapter4();
   if (chapterId === 'chapter-5') enterChapter5();

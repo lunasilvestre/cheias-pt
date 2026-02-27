@@ -138,15 +138,21 @@ const LAYER_DEFS: Record<string, LayerDef> = {
       'text-halo-width': 1.5,
     },
   },
-  'sentinel1-flood-extent': {
+  'ghost-flood-pulse': {
     type: 'fill',
     source: { type: 'vector', url: 'pmtiles://data/flood-extent/combined.pmtiles' },
     'source-layer': 'flood-extent',
-    paint: { 'fill-color': '#e74c3c', 'fill-opacity': 0 },
+    paint: { 'fill-color': '#1a5276', 'fill-opacity': 0 },
+  },
+  'sentinel1-flood-extent': {
+    type: 'fill',
+    sourceRef: 'ghost-flood-pulse',
+    'source-layer': 'flood-extent',
+    paint: { 'fill-color': '#2471a3', 'fill-opacity': 0 },
   },
   'flood-extent-polygons': {
     type: 'fill',
-    sourceRef: 'sentinel1-flood-extent',
+    sourceRef: 'ghost-flood-pulse',
     'source-layer': 'flood-extent',
     paint: { 'fill-color': '#e74c3c', 'fill-opacity': 0 },
   },
@@ -213,6 +219,12 @@ const LAYER_DEFS: Record<string, LayerDef> = {
     tileSize: 256,
     attribution: 'Precipitation: Open-Meteo / ERA5',
     paint: { 'raster-opacity': 0 },
+  },
+  'wildfires-burn-scars': {
+    type: 'fill',
+    source: { type: 'vector', url: 'pmtiles://data/qgis/wildfires-combined.pmtiles' },
+    'source-layer': 'wildfires',
+    paint: { 'fill-color': '#c0631a', 'fill-opacity': 0 },
   },
   'sst-anomaly': { stub: true, type: 'raster', paint: {} },
   'atmospheric-river-track': { stub: true, type: 'line', paint: {} },
