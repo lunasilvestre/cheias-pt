@@ -53,9 +53,16 @@ export async function loadCOG(url: string): Promise<DecodedRaster> {
   const height = image.getHeight();
 
   const rasters = await image.readRasters({ interleave: true });
-  const data = rasters instanceof Float32Array
+  const rawData = rasters instanceof Float32Array
     ? rasters
     : new Float32Array(rasters as ArrayLike<number>);
+
+  // Detect non-standard positive Y-resolution (south-to-north pixel order)
+  // and flip to standard north-to-south for consistent BitmapLayer rendering
+  const resolution = image.getResolution();
+  const data = resolution[1] > 0
+    ? flipRowsVertically(rawData, width, height)
+    : rawData;
 
   const result: DecodedRaster = {
     data,
@@ -67,6 +74,19 @@ export async function loadCOG(url: string): Promise<DecodedRaster> {
 
   cogCache.set(url, result);
   return result;
+}
+
+/**
+ * Flip raster rows vertically (south-to-north → north-to-south).
+ */
+function flipRowsVertically(data: Float32Array, width: number, height: number): Float32Array {
+  const flipped = new Float32Array(data.length);
+  for (let y = 0; y < height; y++) {
+    const srcOffset = y * width;
+    const dstOffset = (height - 1 - y) * width;
+    flipped.set(data.subarray(srcOffset, srcOffset + width), dstOffset);
+  }
+  return flipped;
 }
 
 /**

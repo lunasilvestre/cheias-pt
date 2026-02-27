@@ -11,7 +11,7 @@ import type { Map as MLMap } from 'maplibre-gl';
 import { BitmapLayer } from '@deck.gl/layers';
 import type { Layer } from '@deck.gl/core';
 import type { Chapter, ResolvedChapter, RasterManifest, TemporalConfig } from './types';
-import { loadRasterManifest, loadDischargeTimeseries, loadJSON, loadCOG, applyColormap, rasterToImageBitmap } from './data-loader';
+import { loadRasterManifest, loadDischargeTimeseries, loadJSON, loadCOG } from './data-loader';
 import { ensureLayer, setLayerOpacity, updateSourceData, updateImageSource } from './layer-manager';
 import { setDeckOverlayLayers } from './map-setup';
 import { compositeUV, createWindParticles } from './weather-layers';
@@ -159,6 +159,7 @@ export function leaveChapter1(): void {
 // ── Ch.2 Atlantic Engine ──
 
 let ch2Timeline: gsap.core.Timeline | null = null;
+let ch2SstPlayer: TemporalPlayer | null = null;
 let ch2IvtPlayer: TemporalPlayer | null = null;
 let ch2WindLayer: Layer | null = null;
 let ch2SstBitmap: ImageBitmap | null = null;
@@ -212,16 +213,47 @@ export async function enterChapter2(): Promise<void> {
   ensureLayer(map, 'storm-tracks');
   ensureLayer(map, 'storm-track-labels');
 
-  // 1. Load SST COG (single representative mid-January frame)
+  // 1. SST temporal animation — 10 weekly COGs at 0.5fps
   try {
-    const sstRaster = await loadCOG('data/cog/sst/2026-01-15.tif');
-    const sstImageData = applyColormap(sstRaster, 'sst-diverging');
-    ch2SstBitmap = await rasterToImageBitmap(sstImageData);
-    ch2SstBounds = sstRaster.bounds;
-    rebuildCh2DeckLayers();
+    const firstSst = await loadCOG('data/cog/sst/2025-12-01.tif');
+    ch2SstBounds = firstSst.bounds;
   } catch (err) {
-    console.warn('[scroll-engine] Failed to load SST COG:', err);
+    console.warn('[scroll-engine] Failed to read SST bounds:', err);
   }
+
+  const sstUrls: string[] = [];
+  const sstDates: string[] = [];
+  {
+    const sstStart = new Date('2025-12-01');
+    for (let i = 0; i < 66; i += 7) {
+      const d = new Date(sstStart);
+      d.setDate(d.getDate() + i);
+      const dateStr = d.toISOString().slice(0, 10);
+      sstUrls.push(`data/cog/sst/${dateStr}.tif`);
+      sstDates.push(dateStr);
+    }
+  }
+
+  ch2SstPlayer = new TemporalPlayer('chapter-2-sst', {
+    id: 'ch2-sst',
+    frameType: 'cog',
+    mode: 'autoplay',
+    fps: 0.5,
+    loop: true,
+    urls: sstUrls,
+    dates: sstDates,
+    paletteId: 'sst-diverging',
+  });
+
+  ch2SstPlayer.onImage((bitmap) => {
+    ch2SstBitmap = bitmap;
+    rebuildCh2DeckLayers();
+  });
+
+  // Await SST load so frames are ready before timeline starts
+  await ch2SstPlayer.load().catch(err => {
+    console.warn('[scroll-engine] SST loading failed:', err);
+  });
 
   // 2. Get IVT bounds from first COG, then create TemporalPlayer
   try {
@@ -264,7 +296,7 @@ export async function enterChapter2(): Promise<void> {
     if (date) updateDateLabel(date);
   });
 
-  // Start loading IVT frames in background (78 COGs)
+  // Start loading IVT frames in background (77 COGs)
   ch2IvtPlayer.load().catch(err => {
     console.warn('[scroll-engine] IVT loading failed:', err);
   });
@@ -293,17 +325,19 @@ export function leaveChapter2(): void {
     ch2Timeline = null;
   }
 
+  if (ch2SstPlayer) {
+    ch2SstPlayer.destroy();
+    ch2SstPlayer = null;
+  }
+
   if (ch2IvtPlayer) {
     ch2IvtPlayer.destroy();
     ch2IvtPlayer = null;
   }
 
-  // Release ImageBitmap GPU resources
-  if (ch2SstBitmap) {
-    ch2SstBitmap.close();
-    ch2SstBitmap = null;
-  }
-  ch2IvtCurrentBitmap = null; // owned by TemporalPlayer, closed by its destroy()
+  // Bitmaps are owned by their TemporalPlayers, released by destroy()
+  ch2SstBitmap = null;
+  ch2IvtCurrentBitmap = null;
 
   ch2WindLayer = null;
   ch2SstBounds = null;
@@ -334,11 +368,14 @@ function buildChapter2Timeline(): void {
   const ivtProxy = { opacity: 0 };
   const windProxy = { opacity: 0 };
 
-  // 0s: SST fade in 0→0.8 (1.5s)
+  // 0s: SST player starts + fade in 0→0.8 (1.5s)
   ch2Timeline.to(sstProxy, {
     opacity: 0.8,
     duration: 1.5,
     ease: 'power2.out',
+    onStart: () => {
+      if (ch2SstPlayer) ch2SstPlayer.play();
+    },
     onUpdate: () => {
       ch2SstOpacity = sstProxy.opacity;
       rebuildCh2DeckLayers();
