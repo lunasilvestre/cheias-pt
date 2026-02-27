@@ -5,10 +5,18 @@ ERA5 reanalysis-era5-single-levels, then processes to Cloud-Optimized GeoTIFFs.
 
 Domain: 36N-60N, 60W-5E (North Atlantic + Iberia)
 Temporal:
-  - Hourly for Jan 26-30, 2026 (storm period)
-  - 6-hourly (00,06,12,18 UTC) for remaining days: Dec 1-31 2025, Jan 1-25 2026, Jan 31-Feb 15 2026
+  - Hourly for storm periods:
+      Kristin:  Jan 26-30, 2026
+      Leonardo: Feb 4-8, 2026
+      Marta:    Feb 9-12, 2026
+  - 6-hourly (00,06,12,18 UTC) for remaining days: Dec 1 2025 - Feb 15 2026
 
 Output: data/cog/{mslp,wind-u,wind-v,wind-gust}/YYYY-MM-DDTHH.tif
+
+Usage:
+  python scripts/fetch_era5_synoptic.py test          # single test day (Jan 28)
+  python scripts/fetch_era5_synoptic.py full           # full Dec 1 - Feb 15
+  python scripts/fetch_era5_synoptic.py storms-only    # only storm periods (hourly)
 """
 import cdsapi
 import xarray as xr
@@ -46,9 +54,12 @@ SHORT_NAMES = {
 # Domain: North, West, South, East
 AREA = [60, -60, 36, 5]
 
-# Storm period gets hourly data
-STORM_START = datetime(2026, 1, 26)
-STORM_END = datetime(2026, 1, 30)
+# Storm periods get hourly data (name, start, end inclusive)
+STORM_PERIODS = [
+    ("Kristin",  datetime(2026, 1, 26), datetime(2026, 1, 30)),
+    ("Leonardo", datetime(2026, 2, 4),  datetime(2026, 2, 8)),
+    ("Marta",    datetime(2026, 2, 9),  datetime(2026, 2, 12)),
+]
 
 # Full range
 RANGE_START = datetime(2025, 12, 1)
@@ -76,23 +87,42 @@ def ensure_dirs():
         d.mkdir(parents=True, exist_ok=True)
 
 
-def build_requests():
+def _is_storm_day(dt):
+    """Check if a date falls within any storm period."""
+    for _name, start, end in STORM_PERIODS:
+        if start <= dt <= end:
+            return True
+    return False
+
+
+def build_requests(storms_only=False):
     """Build a list of CDS API request dicts, batched by month.
+
+    Args:
+        storms_only: If True, only build requests for storm periods (hourly).
 
     Returns list of (label, request_dict, nc_path) tuples.
     """
-    # Group dates by (year, month) to batch requests
     from collections import defaultdict
 
     month_days = defaultdict(list)  # (year, month) -> [(day, [hours])]
 
-    current = RANGE_START
-    while current <= RANGE_END:
-        is_storm = STORM_START <= current <= STORM_END
-        hours = HOURS_ALL if is_storm else HOURS_6H
-        key = (current.year, current.month)
-        month_days[key].append((current.day, hours))
-        current += timedelta(days=1)
+    if storms_only:
+        # Only storm period days, all hourly
+        for name, start, end in STORM_PERIODS:
+            current = start
+            while current <= end:
+                key = (current.year, current.month)
+                month_days[key].append((current.day, HOURS_ALL))
+                current += timedelta(days=1)
+    else:
+        # Full range: hourly for storm days, 6-hourly otherwise
+        current = RANGE_START
+        while current <= RANGE_END:
+            hours = HOURS_ALL if _is_storm_day(current) else HOURS_6H
+            key = (current.year, current.month)
+            month_days[key].append((current.day, hours))
+            current += timedelta(days=1)
 
     requests = []
     for (year, month), day_hours in sorted(month_days.items()):
@@ -287,11 +317,28 @@ def run_test(client):
 # ---------------------------------------------------------------------------
 def run_full(client):
     """Download and process the full temporal range."""
-    requests = build_requests()
+    requests = build_requests(storms_only=False)
     log.info("=" * 60)
     log.info("FULL MODE: %d batches to process", len(requests))
     log.info("=" * 60)
 
+    _run_batches(client, requests)
+
+
+def run_storms_only(client):
+    """Download and process only the storm periods (hourly)."""
+    requests = build_requests(storms_only=True)
+    log.info("=" * 60)
+    log.info("STORMS-ONLY MODE: %d batches to process", len(requests))
+    for name, start, end in STORM_PERIODS:
+        log.info("  %s: %s to %s", name, start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"))
+    log.info("=" * 60)
+
+    _run_batches(client, requests)
+
+
+def _run_batches(client, requests):
+    """Execute a list of CDS download+process batches."""
     results = {"ok": 0, "fail": 0}
     for label, request, nc_path in requests:
         ok = download_and_process(client, label, request, nc_path)
@@ -322,8 +369,10 @@ def main():
         sys.exit(0 if success else 1)
     elif mode == "full":
         run_full(client)
+    elif mode == "storms-only":
+        run_storms_only(client)
     else:
-        print(f"Usage: {sys.argv[0]} [test|full]")
+        print(f"Usage: {sys.argv[0]} [test|full|storms-only]")
         sys.exit(1)
 
 

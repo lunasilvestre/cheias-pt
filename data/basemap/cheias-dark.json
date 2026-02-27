@@ -1,0 +1,76 @@
+{
+  "chapter_groups": {
+    "ch0-ch1": {
+      "name": "Ultra-dark ocean",
+      "ocean": "#060e14",
+      "land": "#0a1520",
+      "labels": false,
+      "terrain": false,
+      "basemap_opacity": 0.12,
+      "notes": "Maximum drama. Map almost invisible. Flood extent is sole data layer — ghostly blue on near-black."
+    },
+    "ch2": {
+      "name": "Dark ocean globe",
+      "ocean": "#0a212e",
+      "land": "#12201a",
+      "labels": false,
+      "terrain": false,
+      "basemap_opacity": 0.18,
+      "notes": "Planetary scale. Land is silhouette only. SST anomaly fills the ocean. Wind particles animate on top at runtime."
+    },
+    "ch3": {
+      "name": "Muted terrain",
+      "ocean": "#1a2a3a",
+      "land": "muted-green",
+      "labels": false,
+      "terrain": "hillshade",
+      "basemap_opacity": 0.35,
+      "notes": "Ground-focused. Need topography visible through soil moisture data. MapLibre terrain-v2 or hillshade tiles needed for Phase 2."
+    },
+    "ch4": {
+      "name": "Dark synoptic",
+      "ocean": "#080c10",
+      "land": "#0a0e12",
+      "labels": "minimal",
+      "terrain": false,
+      "basemap_opacity": 0.10,
+      "notes": "Maximum contrast for weather data. Near-black canvas for luminous MSLP contours, precipitation blues, and particle effects."
+    },
+    "ch5": {
+      "name": "Terrain + hydro",
+      "ocean": "#1a2a3a",
+      "land": "terrain",
+      "labels": "portuguese",
+      "terrain": "hillshade",
+      "basemap_opacity": 0.45,
+      "notes": "Story is water flowing through terrain. Rivers, basins, stations visible. Portuguese labels at moderate opacity for geographic context."
+    },
+    "ch6": {
+      "name": "Aerial hybrid",
+      "ocean": "satellite",
+      "land": "satellite",
+      "labels": "light",
+      "terrain": true,
+      "basemap_opacity": 1.0,
+      "notes": "Esri World Imagery at full opacity. Intimacy — viewer sees fields, towns, roads. Flood data overlaid in semi-transparent blues."
+    }
+  },
+  "basemap_sources": {
+    "dark_matter": {
+      "type": "xyz",
+      "url": "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+      "attribution": "CARTO"
+    },
+    "esri_imagery": {
+      "type": "xyz",
+      "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      "attribution": "Esri, Maxar, Earthstar Geographics"
+    }
+  },
+  "global_settings": {
+    "background_tint": "navy",
+    "avoid_pure_black": true,
+    "contour_stroke": "1.5px white",
+    "label_font": "Noto Sans, system-ui"
+  }
+}
