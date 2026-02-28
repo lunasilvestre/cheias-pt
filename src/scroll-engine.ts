@@ -626,8 +626,16 @@ type Ch4Sub = 'kristin' | 'respite' | 'leonardo' | 'marta';
 let ch4ActiveSub: Ch4Sub | null = null;
 let ch4SubTimeline: gsap.core.Timeline | null = null;
 let ch4SubVersion = 0; // Abort token for async sub-chapter entries
-let ch4SynopticPlayer: TemporalPlayer | null = null;
 let ch4SatellitePlayer: TemporalPlayer | null = null;
+
+// Lazy synoptic animation state (replaces TemporalPlayer for weather-layers)
+let ch4SynopticTimestamps: string[] = [];
+let ch4SynopticIndex = 0;
+let ch4SynopticRafId: number | null = null;
+let ch4SynopticLastTime = 0;
+let ch4SynopticPlaying = false;
+let ch4SynopticStormName: string | undefined;
+const CH4_SYNOPTIC_FPS = 8;
 let ch4DeckLayers: Layer[] = [];
 let ch4Loading = false;
 let ch4Loaded = false;
@@ -676,6 +684,63 @@ function updateDateTimeLabel(timestamp: string): void {
   updateDateLabel(timestamp);
 }
 
+/** Lazy synoptic animation — loads one frame at a time via updateWeatherFrame */
+function startSynopticLoop(timestamps: string[], stormName?: string): void {
+  ch4SynopticTimestamps = timestamps;
+  ch4SynopticIndex = 0;
+  ch4SynopticStormName = stormName;
+  ch4SynopticPlaying = true;
+  ch4SynopticLastTime = performance.now();
+  synopticTick(ch4SynopticLastTime);
+}
+
+function stopSynopticLoop(): void {
+  ch4SynopticPlaying = false;
+  if (ch4SynopticRafId !== null) {
+    cancelAnimationFrame(ch4SynopticRafId);
+    ch4SynopticRafId = null;
+  }
+  ch4SynopticTimestamps = [];
+  ch4SynopticIndex = 0;
+  ch4SynopticStormName = undefined;
+}
+
+let ch4SynopticLoading = false; // guard against overlapping frame loads
+
+function synopticTick(now: number): void {
+  if (!ch4SynopticPlaying) return;
+
+  const interval = 1000 / CH4_SYNOPTIC_FPS;
+  if (now - ch4SynopticLastTime >= interval && !ch4SynopticLoading) {
+    ch4SynopticLastTime = now;
+    const count = ch4SynopticTimestamps.length;
+    if (count === 0) return;
+
+    ch4SynopticIndex = (ch4SynopticIndex + 1) % count;
+    const ts = ch4SynopticTimestamps[ch4SynopticIndex];
+
+    // Update date label and synced layers
+    updateDateTimeLabel(ts);
+    const dayDate = timestampToDate(ts);
+    updatePrecipFrame(dayDate);
+    updateIPMAWarnings(dayDate, ch4SynopticStormName);
+
+    // Load this single frame lazily (3 COGs: MSLP + wind-u + wind-v)
+    ch4SynopticLoading = true;
+    updateWeatherFrame(ts, 'data/cog').then(set => {
+      if (!ch4SynopticPlaying) return; // stale
+      ch4SynopticLayers = weatherLayersToArray(set);
+      scheduleCh4DeckRebuild();
+      ch4SynopticLoading = false;
+    }).catch(err => {
+      console.warn('[scroll-engine] Synoptic frame load failed:', ts, err);
+      ch4SynopticLoading = false;
+    });
+  }
+
+  ch4SynopticRafId = requestAnimationFrame(synopticTick);
+}
+
 /** Throttle Ch.4 deck.gl rebuilds to once per animation frame */
 let ch4DeckDirty = false;
 
@@ -684,7 +749,7 @@ function scheduleCh4DeckRebuild(): void {
   ch4DeckDirty = true;
   requestAnimationFrame(() => {
     ch4DeckDirty = false;
-    scheduleCh4DeckRebuild();
+    rebuildCh4DeckLayers();
   });
 }
 
@@ -805,10 +870,8 @@ function cleanupCh4Sub(): void {
     ch4SubTimeline = null;
   }
 
-  if (ch4SynopticPlayer) {
-    ch4SynopticPlayer.destroy();
-    ch4SynopticPlayer = null;
-  }
+  // Stop lazy synoptic animation
+  stopSynopticLoop();
 
   if (ch4SatellitePlayer) {
     ch4SatellitePlayer.destroy();
@@ -893,32 +956,6 @@ async function enterKristin(version: number): Promise<void> {
   // Build Kristin hourly timestamps: Jan 26 00Z → Jan 30 23Z
   const timestamps = generateHourlyTimestamps('2026-01-26', '2026-01-30');
 
-  // Create synoptic weather player (loads COGs per-frame)
-  ch4SynopticPlayer = new TemporalPlayer('ch4-synoptic', {
-    id: 'ch4-synoptic',
-    frameType: 'weather-layers',
-    mode: 'autoplay',
-    fps: 8,
-    loop: true,
-    urls: timestamps,
-    dates: timestamps,
-  });
-
-  ch4SynopticPlayer.onLayers((layers) => {
-    ch4SynopticLayers = layers;
-    scheduleCh4DeckRebuild();
-  });
-
-  ch4SynopticPlayer.onFrame((_idx, date) => {
-    if (date) {
-      updateDateTimeLabel(date);
-      // Sync precipitation + IPMA to current date
-      const dayDate = timestampToDate(date);
-      updatePrecipFrame(dayDate);
-      updateIPMAWarnings(dayDate, 'Kristin');
-    }
-  });
-
   // Load satellite IR for Kristin (Jan 27-28, 48 frames, for crossfade)
   const satTimestamps = generateSatelliteTimestamps('2026-01-27', '2026-01-28');
   const satUrls = satTimestamps.map(ts => `data/cog/satellite-ir/${ts}.tif`);
@@ -974,21 +1011,16 @@ async function enterKristin(version: number): Promise<void> {
   if (version !== ch4SubVersion) return;
   showDateLabel();
 
-  // Start loading synoptic frames (lazy per-frame loading via weather-layers mode)
-  ch4SynopticPlayer.load().catch(err => {
-    console.warn('[scroll-engine] Synoptic loading failed:', err);
-  });
-
   // Load satellite IR frames in background
   ch4SatellitePlayer.load().catch(err => {
     console.warn('[scroll-engine] Satellite IR loading failed:', err);
   });
 
-  // Build GSAP choreography timeline
-  buildKristinTimeline();
+  // Build GSAP choreography timeline (synoptic loop starts via onStart)
+  buildKristinTimeline(timestamps);
 }
 
-function buildKristinTimeline(): void {
+function buildKristinTimeline(timestamps: string[]): void {
   const synProxy = { opacity: 0 };
   const precipProxy = { opacity: 0 };
   const warningProxy = { opacity: 0 };
@@ -1003,7 +1035,7 @@ function buildKristinTimeline(): void {
     opacity: 0.9,
     duration: 1.5,
     ease: 'power2.out',
-    onStart: () => { if (ch4SynopticPlayer) ch4SynopticPlayer.play(); },
+    onStart: () => { startSynopticLoop(timestamps, 'Kristin'); },
     onUpdate: () => {
       ch4SynopticOpacity = synProxy.opacity;
       scheduleCh4DeckRebuild();
@@ -1129,7 +1161,7 @@ async function enterRespite(version: number): Promise<void> {
 
   // Freeze on Jan 31 — show static MSLP frame
   try {
-    const weatherSet = await updateWeatherFrame('2026-01-31T12');
+    const weatherSet = await updateWeatherFrame('2026-01-31T12', 'data/cog');
     if (version !== ch4SubVersion) return;
     ch4SynopticLayers = weatherLayersToArray(weatherSet);
     ch4SynopticOpacity = 0.5;
@@ -1248,30 +1280,6 @@ async function enterLeonardo(version: number): Promise<void> {
   // Leonardo timestamps: Feb 4 00Z → Feb 8 23Z
   const timestamps = generateHourlyTimestamps('2026-02-04', '2026-02-08');
 
-  ch4SynopticPlayer = new TemporalPlayer('ch4-synoptic-leo', {
-    id: 'ch4-synoptic-leo',
-    frameType: 'weather-layers',
-    mode: 'autoplay',
-    fps: 8,
-    loop: true,
-    urls: timestamps,
-    dates: timestamps,
-  });
-
-  ch4SynopticPlayer.onLayers((layers) => {
-    ch4SynopticLayers = layers;
-    scheduleCh4DeckRebuild();
-  });
-
-  ch4SynopticPlayer.onFrame((_idx, date) => {
-    if (date) {
-      updateDateTimeLabel(date);
-      const dayDate = timestampToDate(date);
-      updatePrecipFrame(dayDate);
-      updateIPMAWarnings(dayDate, 'Leonardo');
-    }
-  });
-
   // Satellite IR for Leonardo (Feb 4-8, 97 frames)
   const satTimestamps = generateSatelliteTimestamps('2026-02-04', '2026-02-08');
   const satUrls = satTimestamps.map(ts => `data/cog/satellite-ir/${ts}.tif`);
@@ -1314,18 +1322,15 @@ async function enterLeonardo(version: number): Promise<void> {
 
   showDateLabel();
 
-  ch4SynopticPlayer.load().catch(err => {
-    console.warn('[scroll-engine] Leonardo synoptic loading failed:', err);
-  });
-
   ch4SatellitePlayer.load().catch(err => {
     console.warn('[scroll-engine] Leonardo satellite loading failed:', err);
   });
 
-  buildLeonardoTimeline();
+  // Build GSAP choreography timeline (synoptic loop starts via onStart)
+  buildLeonardoTimeline(timestamps);
 }
 
-function buildLeonardoTimeline(): void {
+function buildLeonardoTimeline(timestamps: string[]): void {
   const synProxy = { opacity: 0 };
   const precipProxy = { opacity: 0 };
   const warningProxy = { opacity: 0 };
@@ -1339,7 +1344,7 @@ function buildLeonardoTimeline(): void {
     opacity: 0.9,
     duration: 1.5,
     ease: 'power2.out',
-    onStart: () => { if (ch4SynopticPlayer) ch4SynopticPlayer.play(); },
+    onStart: () => { startSynopticLoop(timestamps, 'Leonardo'); },
     onUpdate: () => {
       ch4SynopticOpacity = synProxy.opacity;
       scheduleCh4DeckRebuild();
@@ -1436,30 +1441,6 @@ async function enterMarta(version: number): Promise<void> {
   // Marta timestamps: Feb 9 00Z → Feb 12 23Z
   const timestamps = generateHourlyTimestamps('2026-02-09', '2026-02-12');
 
-  ch4SynopticPlayer = new TemporalPlayer('ch4-synoptic-marta', {
-    id: 'ch4-synoptic-marta',
-    frameType: 'weather-layers',
-    mode: 'autoplay',
-    fps: 8,
-    loop: true,
-    urls: timestamps,
-    dates: timestamps,
-  });
-
-  ch4SynopticPlayer.onLayers((layers) => {
-    ch4SynopticLayers = layers;
-    scheduleCh4DeckRebuild();
-  });
-
-  ch4SynopticPlayer.onFrame((_idx, date) => {
-    if (date) {
-      updateDateTimeLabel(date);
-      const dayDate = timestampToDate(date);
-      updatePrecipFrame(dayDate);
-      updateIPMAWarnings(dayDate, 'Marta');
-    }
-  });
-
   // Satellite IR for Marta (Feb 9-12, 73 frames)
   const satTimestamps = generateSatelliteTimestamps('2026-02-09', '2026-02-12');
   const satUrls = satTimestamps.map(ts => `data/cog/satellite-ir/${ts}.tif`);
@@ -1502,18 +1483,15 @@ async function enterMarta(version: number): Promise<void> {
 
   showDateLabel();
 
-  ch4SynopticPlayer.load().catch(err => {
-    console.warn('[scroll-engine] Marta synoptic loading failed:', err);
-  });
-
   ch4SatellitePlayer.load().catch(err => {
     console.warn('[scroll-engine] Marta satellite loading failed:', err);
   });
 
-  buildMartaTimeline();
+  // Build GSAP choreography timeline (synoptic loop starts via onStart)
+  buildMartaTimeline(timestamps);
 }
 
-function buildMartaTimeline(): void {
+function buildMartaTimeline(timestamps: string[]): void {
   const synProxy = { opacity: 0 };
   const precipProxy = { opacity: 0 };
   const warningProxy = { opacity: 0 };
@@ -1527,7 +1505,7 @@ function buildMartaTimeline(): void {
     opacity: 0.9,
     duration: 1.5,
     ease: 'power2.out',
-    onStart: () => { if (ch4SynopticPlayer) ch4SynopticPlayer.play(); },
+    onStart: () => { startSynopticLoop(timestamps, 'Marta'); },
     onUpdate: () => {
       ch4SynopticOpacity = synProxy.opacity;
       scheduleCh4DeckRebuild();

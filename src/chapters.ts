@@ -107,7 +107,7 @@ export const chapters: Chapter[] = [
     animation: { type: 'easeTo', duration: 1500 },
     layers: [
       { id: 'precipitation-raster', opacity: 0.8, type: 'raster' },
-      { id: 'ipma-warnings-timeline', opacity: 0.9, type: 'geojson' },
+      { id: 'ipma-warnings', opacity: 0.9, type: 'geojson' },
       { id: 'basins-outline', opacity: 0.3, type: 'geojson' },
     ],
     legend: [

@@ -78,7 +78,7 @@ export class TemporalPlayer {
 
     const paletteConfig = getPalette(paletteId);
 
-    const promises = urls.map(async (url) => {
+    const results = await Promise.allSettled(urls.map(async (url, i) => {
       const raster = await loadCOG(url);
 
       // Apply blur if palette specifies it
@@ -88,10 +88,38 @@ export class TemporalPlayer {
       }
 
       const imageData = applyColormap({ ...raster, data }, paletteId);
-      return rasterToImageBitmap(imageData);
-    });
+      const bitmap = await rasterToImageBitmap(imageData);
+      return { index: i, bitmap };
+    }));
 
-    this.frames = await Promise.all(promises);
+    // Filter to successful frames and keep dates in sync
+    const successFrames: ImageBitmap[] = [];
+    const successDates: string[] = [];
+    const dates = this.config.dates ?? [];
+
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        successFrames.push(result.value.bitmap);
+        if (dates[result.value.index]) {
+          successDates.push(dates[result.value.index]);
+        }
+      }
+    }
+
+    if (successFrames.length === 0) {
+      throw new Error(`All COG frames failed to load for ${this.id}`);
+    }
+
+    const failed = results.length - successFrames.length;
+    if (failed > 0) {
+      console.warn(`[temporal-player] ${this.id}: ${failed}/${results.length} COG frames failed to load`);
+    }
+
+    this.frames = successFrames;
+    // Update dates to match successful frames only
+    if (successDates.length > 0) {
+      this.config = { ...this.config, dates: successDates };
+    }
   }
 
   private async loadWeatherFrames(timestamps: string[]): Promise<void> {
