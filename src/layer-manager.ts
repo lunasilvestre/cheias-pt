@@ -258,7 +258,34 @@ const LAYER_DEFS: Record<string, LayerDef> = {
       'text-halo-width': 1,
     },
   },
-  'ipma-warnings-timeline': { stub: true, type: 'line', paint: {} },
+  'ipma-warnings': {
+    type: 'fill',
+    source: { type: 'geojson', data: 'data/qgis/ipma-warnings-timeline.geojson' },
+    paint: {
+      'fill-color': [
+        'match', ['get', 'warning_level'],
+        'yellow', '#ffd700',
+        'orange', '#ff8c00',
+        'red', '#dc143c',
+        '#333333',
+      ],
+      'fill-opacity': 0,
+    },
+  },
+  'frontal-boundaries': {
+    type: 'line',
+    source: { type: 'geojson', data: 'data/qgis/frontal-boundaries.geojson' },
+    paint: {
+      'line-color': [
+        'match', ['get', 'front_type'],
+        'cold', '#4169e1',
+        'warm', '#dc143c',
+        '#ffffff',
+      ],
+      'line-width': 3,
+      'line-opacity': 0,
+    },
+  },
   'satellite-after': { stub: true, type: 'raster', paint: {} },
 };
 

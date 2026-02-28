@@ -47,7 +47,7 @@
   "satellite-ir": {
     "type": "inverted-grayscale",
     "stops": [[0, "#ffffff"], [1.0, "#000000"]],
-    "domain": "brightness_temperature",
+    "domain": [0, 255],
     "units": "K",
     "alpha_mode": "fixed_0.9",
     "chapters": ["ch4"],

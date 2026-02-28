@@ -7,14 +7,14 @@
 
 import scrollama from 'scrollama';
 import { gsap } from 'gsap';
-import type { Map as MLMap } from 'maplibre-gl';
-import { BitmapLayer } from '@deck.gl/layers';
+import type { Map as MLMap, FilterSpecification } from 'maplibre-gl';
+import { BitmapLayer, ScatterplotLayer } from '@deck.gl/layers';
 import type { Layer } from '@deck.gl/core';
 import type { Chapter, ResolvedChapter, RasterManifest, TemporalConfig } from './types';
 import { loadRasterManifest, loadDischargeTimeseries, loadJSON, loadCOG } from './data-loader';
 import { ensureLayer, setLayerOpacity, updateSourceData, updateImageSource } from './layer-manager';
 import { setDeckOverlayLayers } from './map-setup';
-import { compositeUV, createWindParticles } from './weather-layers';
+import { compositeUV, createWindParticles, updateWeatherFrame, weatherLayersToArray } from './weather-layers';
 import { TemporalPlayer } from './temporal-player';
 
 // ── Scrollama instance ──
@@ -618,56 +618,1043 @@ function formatDateLabelPT(dateStr: string): string {
   return `${d.getDate()} de ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-export async function enterChapter4(): Promise<void> {
+// ── Ch.4 Three Storms — sub-chapter state machine ──
+
+type Ch4Sub = 'kristin' | 'respite' | 'leonardo' | 'marta';
+
+// Sub-chapter state
+let ch4ActiveSub: Ch4Sub | null = null;
+let ch4SubTimeline: gsap.core.Timeline | null = null;
+let ch4SubVersion = 0; // Abort token for async sub-chapter entries
+let ch4SynopticPlayer: TemporalPlayer | null = null;
+let ch4SatellitePlayer: TemporalPlayer | null = null;
+let ch4DeckLayers: Layer[] = [];
+let ch4Loading = false;
+let ch4Loaded = false;
+let ch4DischargeData: Array<{ basin: string; dates: string[]; values: (number | null)[] }> | null = null;
+
+// GSAP opacity proxies
+let ch4SynopticOpacity = 0;
+let ch4PrecipOpacity = 0;
+let ch4SatelliteOpacity = 0;
+let ch4WarningOpacity = 0;
+let ch4LightningOpacity = 0;
+
+// Precipitation manifest cache
+let ch4PrecipFrames: { date: string; url: string }[] | null = null;
+
+// Lightning GeoJSON cache
+let ch4LightningFeatures: GeoJSON.Feature[] | null = null;
+
+// Current synoptic bitmap + bounds for deck.gl rendering
+let ch4SynopticLayers: Layer[] = [];
+let ch4SatelliteBitmap: ImageBitmap | null = null;
+let ch4SatelliteBounds: [number, number, number, number] | null = null;
+
+/** Update the date label with hour for synoptic timestamps like 2026-01-28T12 */
+function updateDateTimeLabel(timestamp: string): void {
+  const el = document.getElementById('temporal-date-label');
+  if (!el) return;
+
+  const months = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
+
+  // Handle YYYY-MM-DDTHH format
+  const match = timestamp.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2})/);
+  if (match) {
+    const day = parseInt(match[3], 10);
+    const month = months[parseInt(match[2], 10) - 1];
+    const year = match[1];
+    const hour = match[4];
+    el.textContent = `${day} de ${month} ${year} · ${hour}:00 UTC`;
+    return;
+  }
+
+  // Fallback to date-only
+  updateDateLabel(timestamp);
+}
+
+/** Throttle Ch.4 deck.gl rebuilds to once per animation frame */
+let ch4DeckDirty = false;
+
+function scheduleCh4DeckRebuild(): void {
+  if (ch4DeckDirty) return;
+  ch4DeckDirty = true;
+  requestAnimationFrame(() => {
+    ch4DeckDirty = false;
+    scheduleCh4DeckRebuild();
+  });
+}
+
+/** Rebuild Ch.4 deck.gl layers from current state */
+function rebuildCh4DeckLayers(): void {
+  const layers: Layer[] = [];
+
+  // Synoptic weather layers (isobars, particles, H/L, barbs)
+  if (ch4SynopticOpacity > 0 && ch4SynopticLayers.length > 0) {
+    layers.push(...ch4SynopticLayers);
+  }
+
+  // Satellite IR bitmap
+  if (ch4SatelliteOpacity > 0 && ch4SatelliteBitmap && ch4SatelliteBounds) {
+    layers.push(new BitmapLayer({
+      id: 'ch4-satellite-ir',
+      image: ch4SatelliteBitmap,
+      bounds: ch4SatelliteBounds,
+      opacity: ch4SatelliteOpacity,
+    }));
+  }
+
+  // Lightning scatterplot
+  if (ch4LightningOpacity > 0 && ch4LightningFeatures) {
+    layers.push(new ScatterplotLayer({
+      id: 'ch4-lightning',
+      data: ch4LightningFeatures,
+      getPosition: (d: GeoJSON.Feature) => (d.geometry as GeoJSON.Point).coordinates as [number, number],
+      getRadius: 4000,
+      getFillColor: [255, 255, 200, 220],
+      getLineColor: [255, 255, 100, 255],
+      lineWidthMinPixels: 1,
+      stroked: true,
+      opacity: ch4LightningOpacity,
+      radiusMinPixels: 2,
+      radiusMaxPixels: 6,
+    }));
+  }
+
+  ch4DeckLayers = layers;
+  setDeckOverlayLayers(layers);
+}
+
+/** Get the nearest daily precipitation date for a given hourly timestamp */
+function timestampToDate(timestamp: string): string {
+  const match = timestamp.match(/^(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : timestamp;
+}
+
+/** Update IPMA warning choropleth filter to match current date */
+function updateIPMAWarnings(dateStr: string, stormName?: string): void {
+  if (!map) return;
+  const layer = map.getLayer('ipma-warnings');
+  if (!layer) return;
+
+  // Filter by date (and optionally storm)
+  const dateFilter: FilterSpecification = ['==', ['get', 'date'], dateStr];
+  if (stormName) {
+    const stormFilter: FilterSpecification = ['==', ['get', 'storm'], stormName];
+    map.setFilter('ipma-warnings', ['all', dateFilter, stormFilter]);
+  } else {
+    map.setFilter('ipma-warnings', dateFilter);
+  }
+}
+
+/** Update precipitation raster to nearest matching frame */
+function updatePrecipFrame(dateStr: string): void {
+  if (!map || !ch4PrecipFrames) return;
+  // Find exact match or most recent preceding frame
+  let best: { date: string; url: string } | undefined;
+  for (const f of ch4PrecipFrames) {
+    if (f.date === dateStr) { best = f; break; }
+    if (f.date <= dateStr) best = f;
+  }
+  if (best) {
+    updateImageSource(map, 'precipitation-raster', `data/${best.url}`);
+  }
+}
+
+/** Generate hourly timestamps for a date range (inclusive) */
+function generateHourlyTimestamps(startDate: string, endDate: string): string[] {
+  const timestamps: string[] = [];
+  const start = new Date(startDate + 'T00:00:00Z');
+  const end = new Date(endDate + 'T23:00:00Z');
+
+  for (let d = new Date(start); d <= end; d.setUTCHours(d.getUTCHours() + 1)) {
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    const h = String(d.getUTCHours()).padStart(2, '0');
+    timestamps.push(`${y}-${m}-${day}T${h}`);
+  }
+
+  return timestamps;
+}
+
+/** Generate hourly satellite IR filenames (YYYY-MM-DDTHH-00.tif) */
+function generateSatelliteTimestamps(startDate: string, endDate: string): string[] {
+  const timestamps: string[] = [];
+  const start = new Date(startDate + 'T00:00:00Z');
+  const end = new Date(endDate + 'T23:00:00Z');
+
+  for (let d = new Date(start); d <= end; d.setUTCHours(d.getUTCHours() + 1)) {
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    const h = String(d.getUTCHours()).padStart(2, '0');
+    timestamps.push(`${y}-${m}-${day}T${h}-00`);
+  }
+
+  return timestamps;
+}
+
+/** Clean up current sub-chapter state */
+function cleanupCh4Sub(): void {
+  if (ch4SubTimeline) {
+    ch4SubTimeline.kill();
+    ch4SubTimeline = null;
+  }
+
+  if (ch4SynopticPlayer) {
+    ch4SynopticPlayer.destroy();
+    ch4SynopticPlayer = null;
+  }
+
+  if (ch4SatellitePlayer) {
+    ch4SatellitePlayer.destroy();
+    ch4SatellitePlayer = null;
+  }
+
+  ch4SynopticLayers = [];
+  if (ch4SatelliteBitmap) {
+    ch4SatelliteBitmap.close();
+  }
+  ch4SatelliteBitmap = null;
+  ch4SatelliteBounds = null;
+  ch4SynopticOpacity = 0;
+  ch4PrecipOpacity = 0;
+  ch4SatelliteOpacity = 0;
+  ch4WarningOpacity = 0;
+  ch4LightningOpacity = 0;
+  setDeckOverlayLayers([]);
+
+  // Hide annotation
+  const ann = document.getElementById('ch4-annotation');
+  if (ann) { ann.classList.remove('visible'); ann.textContent = ''; }
+
+  // Hide sparklines
+  const spark = document.getElementById('ch4-sparklines');
+  if (spark) { spark.classList.remove('visible'); spark.innerHTML = ''; }
+
+  // Reset MapLibre layer opacities
+  if (map) {
+    setLayerOpacity(map, 'ipma-warnings', 0);
+    setLayerOpacity(map, 'frontal-boundaries', 0);
+    setLayerOpacity(map, 'precipitation-raster', 0);
+    // Clear IPMA filter
+    if (map.getLayer('ipma-warnings')) {
+      map.setFilter('ipma-warnings', ['==', ['get', 'date'], '']);
+    }
+    // Clear frontal boundaries filter
+    if (map.getLayer('frontal-boundaries')) {
+      map.setFilter('frontal-boundaries', null);
+    }
+  }
+}
+
+/** Determine which sub-chapter based on scroll progress */
+function progressToSub(progress: number): Ch4Sub {
+  if (progress < 0.3) return 'kristin';
+  if (progress < 0.45) return 'respite';
+  if (progress < 0.7) return 'leonardo';
+  return 'marta';
+}
+
+/** Handle sub-chapter transitions based on scroll progress */
+function handleChapter4SubChapter(progress: number): void {
+  const targetSub = progressToSub(progress);
+
+  if (targetSub !== ch4ActiveSub) {
+    cleanupCh4Sub();
+    ch4ActiveSub = targetSub;
+    ch4SubVersion++;
+    const version = ch4SubVersion;
+
+    const enter = async () => {
+      switch (targetSub) {
+        case 'kristin': await enterKristin(version); break;
+        case 'respite': await enterRespite(version); break;
+        case 'leonardo': await enterLeonardo(version); break;
+        case 'marta': await enterMarta(version); break;
+      }
+    };
+    enter().catch(err => console.warn('[scroll-engine] Sub-chapter entry failed:', err));
+  }
+}
+
+// ── Sub-chapter: Kristin ──
+
+async function enterKristin(version: number): Promise<void> {
   if (!map) return;
 
-  // Clean up ch3 if still active
-  if (activePlayers.has('chapter-3')) leaveChapter3();
-  // Clean up any existing ch4 player
-  destroyPlayer('chapter-4');
+  // Camera: Atlantic view centered on Portugal
+  map.easeTo({ center: [-10, 40], zoom: 5.5, pitch: 25, bearing: 0, duration: 2000 });
 
-  const manifest: RasterManifest = await loadRasterManifest();
-  const precipFrames = manifest.precipitation.frames;
+  // Build Kristin hourly timestamps: Jan 26 00Z → Jan 30 23Z
+  const timestamps = generateHourlyTimestamps('2026-01-26', '2026-01-30');
 
-  ensureLayer(map, 'precipitation-raster');
-
-  const config: TemporalConfig = {
-    id: 'ch4-precipitation',
-    frameType: 'png',
-    mode: 'scroll-driven',
-    urls: precipFrames.map(f => `data/${f.url}`),
-    dates: precipFrames.map(f => f.date),
-    layerId: 'precipitation-raster',
-  };
-
-  const player = new TemporalPlayer('chapter-4', config);
-  activePlayers.set('chapter-4', player);
-
-  player.onFrame((idx, date) => {
-    if (!map) return;
-    const frame = precipFrames[idx];
-    if (frame) {
-      updateImageSource(map, 'precipitation-raster', `data/${frame.url}`);
-    }
-    if (date) updateDateLabel(date);
+  // Create synoptic weather player (loads COGs per-frame)
+  ch4SynopticPlayer = new TemporalPlayer('ch4-synoptic', {
+    id: 'ch4-synoptic',
+    frameType: 'weather-layers',
+    mode: 'autoplay',
+    fps: 8,
+    loop: true,
+    urls: timestamps,
+    dates: timestamps,
   });
 
-  if (precipFrames.length > 0) {
-    updateImageSource(map, 'precipitation-raster', `data/${precipFrames[0].url}`);
-    updateDateLabel(precipFrames[0].date);
+  ch4SynopticPlayer.onLayers((layers) => {
+    ch4SynopticLayers = layers;
+    scheduleCh4DeckRebuild();
+  });
+
+  ch4SynopticPlayer.onFrame((_idx, date) => {
+    if (date) {
+      updateDateTimeLabel(date);
+      // Sync precipitation + IPMA to current date
+      const dayDate = timestampToDate(date);
+      updatePrecipFrame(dayDate);
+      updateIPMAWarnings(dayDate, 'Kristin');
+    }
+  });
+
+  // Load satellite IR for Kristin (Jan 27-28, 48 frames, for crossfade)
+  const satTimestamps = generateSatelliteTimestamps('2026-01-27', '2026-01-28');
+  const satUrls = satTimestamps.map(ts => `data/cog/satellite-ir/${ts}.tif`);
+
+  ch4SatellitePlayer = new TemporalPlayer('ch4-satellite', {
+    id: 'ch4-satellite',
+    frameType: 'cog',
+    mode: 'autoplay',
+    fps: 4,
+    loop: true,
+    urls: satUrls,
+    dates: satTimestamps,
+    paletteId: 'satellite-ir',
+  });
+
+  ch4SatellitePlayer.onImage((bitmap) => {
+    ch4SatelliteBitmap = bitmap;
+    scheduleCh4DeckRebuild();
+  });
+
+  // Get satellite bounds from first COG
+  try {
+    const firstSat = await loadCOG(satUrls[0]);
+    if (version !== ch4SubVersion) return; // stale — user scrolled away
+    ch4SatelliteBounds = firstSat.bounds;
+  } catch (err) {
+    console.warn('[scroll-engine] Failed to read satellite IR bounds:', err);
+  }
+
+  if (version !== ch4SubVersion) return; // stale — user scrolled away
+
+  // Ensure MapLibre layers
+  ensureLayer(map, 'ipma-warnings');
+  ensureLayer(map, 'frontal-boundaries');
+  ensureLayer(map, 'precipitation-raster');
+
+  // Filter frontal boundaries to Kristin
+  if (map.getLayer('frontal-boundaries')) {
+    map.setFilter('frontal-boundaries', ['==', ['get', 'storm'], 'Kristin']);
+  }
+
+  // Load lightning data
+  if (!ch4LightningFeatures) {
+    try {
+      const geojson = await loadJSON<GeoJSON.FeatureCollection>('data/lightning/lightning-kristin.geojson');
+      if (version !== ch4SubVersion) return;
+      ch4LightningFeatures = geojson.features;
+    } catch (err) {
+      console.warn('[scroll-engine] Failed to load lightning data:', err);
+    }
+  }
+
+  if (version !== ch4SubVersion) return;
+  showDateLabel();
+
+  // Start loading synoptic frames (lazy per-frame loading via weather-layers mode)
+  ch4SynopticPlayer.load().catch(err => {
+    console.warn('[scroll-engine] Synoptic loading failed:', err);
+  });
+
+  // Load satellite IR frames in background
+  ch4SatellitePlayer.load().catch(err => {
+    console.warn('[scroll-engine] Satellite IR loading failed:', err);
+  });
+
+  // Build GSAP choreography timeline
+  buildKristinTimeline();
+}
+
+function buildKristinTimeline(): void {
+  const synProxy = { opacity: 0 };
+  const precipProxy = { opacity: 0 };
+  const warningProxy = { opacity: 0 };
+  const satProxy = { opacity: 0 };
+  const lightningProxy = { opacity: 0 };
+  const frontalProxy = { opacity: 0 };
+
+  ch4SubTimeline = gsap.timeline();
+
+  // 0s: Synoptic player starts, isobars/particles fade in (1.5s)
+  ch4SubTimeline.to(synProxy, {
+    opacity: 0.9,
+    duration: 1.5,
+    ease: 'power2.out',
+    onStart: () => { if (ch4SynopticPlayer) ch4SynopticPlayer.play(); },
+    onUpdate: () => {
+      ch4SynopticOpacity = synProxy.opacity;
+      scheduleCh4DeckRebuild();
+    },
+  }, 0);
+
+  // 1s: Precipitation PNG crossfade in (1.5s)
+  ch4SubTimeline.to(precipProxy, {
+    opacity: 0.5,
+    duration: 1.5,
+    ease: 'power2.out',
+    onUpdate: () => {
+      ch4PrecipOpacity = precipProxy.opacity;
+      if (map) setLayerOpacity(map, 'precipitation-raster', ch4PrecipOpacity);
+    },
+  }, 1);
+
+  // 2.5s: IPMA warnings fade in (1s)
+  ch4SubTimeline.to(warningProxy, {
+    opacity: 0.12,
+    duration: 1,
+    ease: 'power2.out',
+    onUpdate: () => {
+      ch4WarningOpacity = warningProxy.opacity;
+      if (map) setLayerOpacity(map, 'ipma-warnings', ch4WarningOpacity);
+    },
+  }, 2.5);
+
+  // 4s: Frontal boundaries fade in (1s)
+  ch4SubTimeline.to(frontalProxy, {
+    opacity: 0.8,
+    duration: 1,
+    ease: 'power2.out',
+    onUpdate: () => {
+      if (map) setLayerOpacity(map, 'frontal-boundaries', frontalProxy.opacity);
+    },
+  }, 4);
+
+  // 5.5s: Annotation "CICLOGENESE EXPLOSIVA" (show for 3s)
+  ch4SubTimeline.call(() => {
+    const ann = document.getElementById('ch4-annotation');
+    if (ann) {
+      ann.textContent = 'CICLOGENESE EXPLOSIVA';
+      ann.classList.add('visible');
+    }
+  }, undefined, 5.5);
+  ch4SubTimeline.call(() => {
+    const ann = document.getElementById('ch4-annotation');
+    if (ann) ann.classList.remove('visible');
+  }, undefined, 8.5);
+
+  // 8s: Satellite IR crossfade IN, synoptic fades OUT (2s)
+  ch4SubTimeline.to(satProxy, {
+    opacity: 0.9,
+    duration: 2,
+    ease: 'power2.inOut',
+    onStart: () => { if (ch4SatellitePlayer) ch4SatellitePlayer.play(); },
+    onUpdate: () => {
+      ch4SatelliteOpacity = satProxy.opacity;
+      scheduleCh4DeckRebuild();
+    },
+  }, 8);
+  ch4SubTimeline.to(synProxy, {
+    opacity: 0,
+    duration: 2,
+    ease: 'power2.inOut',
+    onUpdate: () => {
+      ch4SynopticOpacity = synProxy.opacity;
+      scheduleCh4DeckRebuild();
+    },
+  }, 8);
+
+  // 14s: Lightning flashes (ScatterplotLayer)
+  ch4SubTimeline.to(lightningProxy, {
+    opacity: 0.8,
+    duration: 1,
+    ease: 'power2.out',
+    onUpdate: () => {
+      ch4LightningOpacity = lightningProxy.opacity;
+      scheduleCh4DeckRebuild();
+    },
+  }, 14);
+
+  // 18s: Synoptic returns, satellite fades (2s)
+  ch4SubTimeline.to(synProxy, {
+    opacity: 0.9,
+    duration: 2,
+    ease: 'power2.inOut',
+    onUpdate: () => {
+      ch4SynopticOpacity = synProxy.opacity;
+      scheduleCh4DeckRebuild();
+    },
+  }, 18);
+  ch4SubTimeline.to(satProxy, {
+    opacity: 0,
+    duration: 2,
+    ease: 'power2.inOut',
+    onUpdate: () => {
+      ch4SatelliteOpacity = satProxy.opacity;
+      scheduleCh4DeckRebuild();
+    },
+  }, 18);
+
+  // 18s: Lightning fades
+  ch4SubTimeline.to(lightningProxy, {
+    opacity: 0,
+    duration: 1.5,
+    ease: 'power2.in',
+    onUpdate: () => {
+      ch4LightningOpacity = lightningProxy.opacity;
+      scheduleCh4DeckRebuild();
+    },
+  }, 18);
+}
+
+// ── Sub-chapter: Respite ──
+
+async function enterRespite(version: number): Promise<void> {
+  if (!map) return;
+
+  // Camera: tighter on Portugal
+  map.easeTo({ center: [-8.5, 39.5], zoom: 7, pitch: 20, bearing: 0, duration: 2000 });
+
+  // Freeze on Jan 31 — show static MSLP frame
+  try {
+    const weatherSet = await updateWeatherFrame('2026-01-31T12');
+    if (version !== ch4SubVersion) return;
+    ch4SynopticLayers = weatherLayersToArray(weatherSet);
+    ch4SynopticOpacity = 0.5;
+    scheduleCh4DeckRebuild();
+  } catch (err) {
+    console.warn('[scroll-engine] Failed to load respite synoptic frame:', err);
+  }
+
+  if (version !== ch4SubVersion) return;
+
+  // Set precipitation to Jan 31
+  ensureLayer(map, 'precipitation-raster');
+  updatePrecipFrame('2026-01-31');
+  setLayerOpacity(map, 'precipitation-raster', 0.3);
+
+  showDateLabel();
+  updateDateTimeLabel('2026-01-31T12');
+
+  // Annotation
+  const ann = document.getElementById('ch4-annotation');
+  if (ann) {
+    ann.textContent = 'O pior já passou? Não.';
+    ann.classList.add('visible');
+  }
+
+  // Discharge sparklines
+  await renderCh4Sparklines(version);
+}
+
+async function renderCh4Sparklines(version: number): Promise<void> {
+  const container = document.getElementById('ch4-sparklines');
+  if (!container) return;
+
+  if (!ch4DischargeData) {
+    try {
+      const data = await loadDischargeTimeseries();
+      if (version !== ch4SubVersion) return;
+      ch4DischargeData = data.stations.map(s => ({
+        basin: s.basin,
+        dates: s.timeseries.map(t => t.date),
+        values: s.timeseries.map(t => t.discharge),
+      }));
+    } catch (err) {
+      console.warn('[scroll-engine] Failed to load discharge data:', err);
+      return;
+    }
+  }
+
+  if (!ch4DischargeData || version !== ch4SubVersion) return;
+  container.innerHTML = '';
+
+  const Plot = await import('@observablehq/plot');
+
+  // Show top 5 rivers by peak discharge
+  const sorted = [...ch4DischargeData].sort((a, b) => {
+    const peakA = Math.max(...(a.values.filter(v => v !== null) as number[]));
+    const peakB = Math.max(...(b.values.filter(v => v !== null) as number[]));
+    return peakB - peakA;
+  }).slice(0, 5);
+
+  for (const river of sorted) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'sparkline-item';
+
+    const label = document.createElement('span');
+    label.className = 'sparkline-label';
+    label.textContent = river.basin;
+    wrapper.appendChild(label);
+
+    const plotData = river.dates
+      .map((d, i) => ({ date: new Date(d), value: river.values[i] }))
+      .filter(d => d.value !== null) as Array<{ date: Date; value: number }>;
+
+    const chart = Plot.plot({
+      width: 160,
+      height: 36,
+      axis: null,
+      margin: 0,
+      marginLeft: 0,
+      marginRight: 0,
+      marginTop: 2,
+      marginBottom: 2,
+      style: { background: 'transparent' },
+      marks: [
+        Plot.line(plotData, {
+          x: 'date',
+          y: 'value',
+          stroke: '#3498db',
+          strokeWidth: 1.5,
+        }),
+        // Mark Jan 28 (Kristin peak)
+        Plot.ruleX([new Date('2026-01-28')], {
+          stroke: '#ff6464',
+          strokeWidth: 1,
+          strokeDasharray: '3,2',
+          strokeOpacity: 0.6,
+        }),
+      ],
+    });
+
+    wrapper.appendChild(chart);
+    container.appendChild(wrapper);
+  }
+
+  container.classList.add('visible');
+}
+
+// ── Sub-chapter: Leonardo ──
+
+async function enterLeonardo(version: number): Promise<void> {
+  if (!map) return;
+
+  // Camera: Atlantic view
+  map.easeTo({ center: [-10, 40], zoom: 5.5, pitch: 25, bearing: 0, duration: 2000 });
+
+  // Leonardo timestamps: Feb 4 00Z → Feb 8 23Z
+  const timestamps = generateHourlyTimestamps('2026-02-04', '2026-02-08');
+
+  ch4SynopticPlayer = new TemporalPlayer('ch4-synoptic-leo', {
+    id: 'ch4-synoptic-leo',
+    frameType: 'weather-layers',
+    mode: 'autoplay',
+    fps: 8,
+    loop: true,
+    urls: timestamps,
+    dates: timestamps,
+  });
+
+  ch4SynopticPlayer.onLayers((layers) => {
+    ch4SynopticLayers = layers;
+    scheduleCh4DeckRebuild();
+  });
+
+  ch4SynopticPlayer.onFrame((_idx, date) => {
+    if (date) {
+      updateDateTimeLabel(date);
+      const dayDate = timestampToDate(date);
+      updatePrecipFrame(dayDate);
+      updateIPMAWarnings(dayDate, 'Leonardo');
+    }
+  });
+
+  // Satellite IR for Leonardo (Feb 4-8, 97 frames)
+  const satTimestamps = generateSatelliteTimestamps('2026-02-04', '2026-02-08');
+  const satUrls = satTimestamps.map(ts => `data/cog/satellite-ir/${ts}.tif`);
+
+  ch4SatellitePlayer = new TemporalPlayer('ch4-satellite-leo', {
+    id: 'ch4-satellite-leo',
+    frameType: 'cog',
+    mode: 'autoplay',
+    fps: 4,
+    loop: true,
+    urls: satUrls,
+    dates: satTimestamps,
+    paletteId: 'satellite-ir',
+  });
+
+  ch4SatellitePlayer.onImage((bitmap) => {
+    ch4SatelliteBitmap = bitmap;
+    scheduleCh4DeckRebuild();
+  });
+
+  try {
+    const firstSat = await loadCOG(satUrls[0]);
+    if (version !== ch4SubVersion) return;
+    ch4SatelliteBounds = firstSat.bounds;
+  } catch (err) {
+    console.warn('[scroll-engine] Failed to read Leonardo satellite bounds:', err);
+  }
+
+  if (version !== ch4SubVersion) return;
+
+  // Ensure MapLibre layers
+  ensureLayer(map, 'ipma-warnings');
+  ensureLayer(map, 'frontal-boundaries');
+  ensureLayer(map, 'precipitation-raster');
+
+  // Filter frontal boundaries to Leonardo (warm front)
+  if (map.getLayer('frontal-boundaries')) {
+    map.setFilter('frontal-boundaries', ['==', ['get', 'storm'], 'Leonardo']);
   }
 
   showDateLabel();
+
+  ch4SynopticPlayer.load().catch(err => {
+    console.warn('[scroll-engine] Leonardo synoptic loading failed:', err);
+  });
+
+  ch4SatellitePlayer.load().catch(err => {
+    console.warn('[scroll-engine] Leonardo satellite loading failed:', err);
+  });
+
+  buildLeonardoTimeline();
+}
+
+function buildLeonardoTimeline(): void {
+  const synProxy = { opacity: 0 };
+  const precipProxy = { opacity: 0 };
+  const warningProxy = { opacity: 0 };
+  const satProxy = { opacity: 0 };
+  const frontalProxy = { opacity: 0 };
+
+  ch4SubTimeline = gsap.timeline();
+
+  // 0s: Synoptic starts, fade in (1.5s)
+  ch4SubTimeline.to(synProxy, {
+    opacity: 0.9,
+    duration: 1.5,
+    ease: 'power2.out',
+    onStart: () => { if (ch4SynopticPlayer) ch4SynopticPlayer.play(); },
+    onUpdate: () => {
+      ch4SynopticOpacity = synProxy.opacity;
+      scheduleCh4DeckRebuild();
+    },
+  }, 0);
+
+  // 1s: Precipitation fade in (1.5s)
+  ch4SubTimeline.to(precipProxy, {
+    opacity: 0.5,
+    duration: 1.5,
+    ease: 'power2.out',
+    onUpdate: () => {
+      ch4PrecipOpacity = precipProxy.opacity;
+      if (map) setLayerOpacity(map, 'precipitation-raster', ch4PrecipOpacity);
+    },
+  }, 1);
+
+  // 2.5s: IPMA warnings escalate to red (1s)
+  ch4SubTimeline.to(warningProxy, {
+    opacity: 0.15,
+    duration: 1,
+    ease: 'power2.out',
+    onUpdate: () => {
+      ch4WarningOpacity = warningProxy.opacity;
+      if (map) setLayerOpacity(map, 'ipma-warnings', ch4WarningOpacity);
+    },
+  }, 2.5);
+
+  // 4s: Warm front line fades in (1s)
+  ch4SubTimeline.to(frontalProxy, {
+    opacity: 0.8,
+    duration: 1,
+    ease: 'power2.out',
+    onUpdate: () => {
+      if (map) setLayerOpacity(map, 'frontal-boundaries', frontalProxy.opacity);
+    },
+  }, 4);
+
+  // 6s: Camera push to Portugal
+  ch4SubTimeline.call(() => {
+    map?.easeTo({ center: [-9, 40], zoom: 7, duration: 4000, essential: true });
+  }, undefined, 6);
+
+  // 9s: Satellite IR crossfade IN, synoptic fades (2s)
+  ch4SubTimeline.to(satProxy, {
+    opacity: 0.9,
+    duration: 2,
+    ease: 'power2.inOut',
+    onStart: () => { if (ch4SatellitePlayer) ch4SatellitePlayer.play(); },
+    onUpdate: () => {
+      ch4SatelliteOpacity = satProxy.opacity;
+      scheduleCh4DeckRebuild();
+    },
+  }, 9);
+  ch4SubTimeline.to(synProxy, {
+    opacity: 0,
+    duration: 2,
+    ease: 'power2.inOut',
+    onUpdate: () => {
+      ch4SynopticOpacity = synProxy.opacity;
+      scheduleCh4DeckRebuild();
+    },
+  }, 9);
+
+  // 15s: Satellite fades, synoptic returns (2s)
+  ch4SubTimeline.to(synProxy, {
+    opacity: 0.9,
+    duration: 2,
+    ease: 'power2.inOut',
+    onUpdate: () => {
+      ch4SynopticOpacity = synProxy.opacity;
+      scheduleCh4DeckRebuild();
+    },
+  }, 15);
+  ch4SubTimeline.to(satProxy, {
+    opacity: 0,
+    duration: 2,
+    ease: 'power2.inOut',
+    onUpdate: () => {
+      ch4SatelliteOpacity = satProxy.opacity;
+      scheduleCh4DeckRebuild();
+    },
+  }, 15);
+}
+
+// ── Sub-chapter: Marta ──
+
+async function enterMarta(version: number): Promise<void> {
+  if (!map) return;
+
+  // Camera: tight on Portugal
+  map.easeTo({ center: [-9, 39.5], zoom: 7.5, pitch: 30, bearing: 0, duration: 2000 });
+
+  // Marta timestamps: Feb 9 00Z → Feb 12 23Z
+  const timestamps = generateHourlyTimestamps('2026-02-09', '2026-02-12');
+
+  ch4SynopticPlayer = new TemporalPlayer('ch4-synoptic-marta', {
+    id: 'ch4-synoptic-marta',
+    frameType: 'weather-layers',
+    mode: 'autoplay',
+    fps: 8,
+    loop: true,
+    urls: timestamps,
+    dates: timestamps,
+  });
+
+  ch4SynopticPlayer.onLayers((layers) => {
+    ch4SynopticLayers = layers;
+    scheduleCh4DeckRebuild();
+  });
+
+  ch4SynopticPlayer.onFrame((_idx, date) => {
+    if (date) {
+      updateDateTimeLabel(date);
+      const dayDate = timestampToDate(date);
+      updatePrecipFrame(dayDate);
+      updateIPMAWarnings(dayDate, 'Marta');
+    }
+  });
+
+  // Satellite IR for Marta (Feb 9-12, 73 frames)
+  const satTimestamps = generateSatelliteTimestamps('2026-02-09', '2026-02-12');
+  const satUrls = satTimestamps.map(ts => `data/cog/satellite-ir/${ts}.tif`);
+
+  ch4SatellitePlayer = new TemporalPlayer('ch4-satellite-marta', {
+    id: 'ch4-satellite-marta',
+    frameType: 'cog',
+    mode: 'autoplay',
+    fps: 4,
+    loop: true,
+    urls: satUrls,
+    dates: satTimestamps,
+    paletteId: 'satellite-ir',
+  });
+
+  ch4SatellitePlayer.onImage((bitmap) => {
+    ch4SatelliteBitmap = bitmap;
+    scheduleCh4DeckRebuild();
+  });
+
+  try {
+    const firstSat = await loadCOG(satUrls[0]);
+    if (version !== ch4SubVersion) return;
+    ch4SatelliteBounds = firstSat.bounds;
+  } catch (err) {
+    console.warn('[scroll-engine] Failed to read Marta satellite bounds:', err);
+  }
+
+  if (version !== ch4SubVersion) return;
+
+  // Ensure MapLibre layers
+  ensureLayer(map, 'ipma-warnings');
+  ensureLayer(map, 'frontal-boundaries');
+  ensureLayer(map, 'precipitation-raster');
+
+  // Filter frontal boundaries to Marta (cold front)
+  if (map.getLayer('frontal-boundaries')) {
+    map.setFilter('frontal-boundaries', ['==', ['get', 'storm'], 'Marta']);
+  }
+
+  showDateLabel();
+
+  ch4SynopticPlayer.load().catch(err => {
+    console.warn('[scroll-engine] Marta synoptic loading failed:', err);
+  });
+
+  ch4SatellitePlayer.load().catch(err => {
+    console.warn('[scroll-engine] Marta satellite loading failed:', err);
+  });
+
+  buildMartaTimeline();
+}
+
+function buildMartaTimeline(): void {
+  const synProxy = { opacity: 0 };
+  const precipProxy = { opacity: 0 };
+  const warningProxy = { opacity: 0 };
+  const satProxy = { opacity: 0 };
+  const frontalProxy = { opacity: 0 };
+
+  ch4SubTimeline = gsap.timeline();
+
+  // 0s: Synoptic starts, all layers fade in simultaneously for maximum impact
+  ch4SubTimeline.to(synProxy, {
+    opacity: 0.9,
+    duration: 1.5,
+    ease: 'power2.out',
+    onStart: () => { if (ch4SynopticPlayer) ch4SynopticPlayer.play(); },
+    onUpdate: () => {
+      ch4SynopticOpacity = synProxy.opacity;
+      scheduleCh4DeckRebuild();
+    },
+  }, 0);
+
+  // 0.5s: Precipitation immediately (full composite)
+  ch4SubTimeline.to(precipProxy, {
+    opacity: 0.5,
+    duration: 1.5,
+    ease: 'power2.out',
+    onUpdate: () => {
+      ch4PrecipOpacity = precipProxy.opacity;
+      if (map) setLayerOpacity(map, 'precipitation-raster', ch4PrecipOpacity);
+    },
+  }, 0.5);
+
+  // 1s: IPMA warnings — all red
+  ch4SubTimeline.to(warningProxy, {
+    opacity: 0.15,
+    duration: 1,
+    ease: 'power2.out',
+    onUpdate: () => {
+      ch4WarningOpacity = warningProxy.opacity;
+      if (map) setLayerOpacity(map, 'ipma-warnings', ch4WarningOpacity);
+    },
+  }, 1);
+
+  // 2s: Cold front line
+  ch4SubTimeline.to(frontalProxy, {
+    opacity: 0.8,
+    duration: 1,
+    ease: 'power2.out',
+    onUpdate: () => {
+      if (map) setLayerOpacity(map, 'frontal-boundaries', frontalProxy.opacity);
+    },
+  }, 2);
+
+  // 6s: Satellite IR crossfade (2s)
+  ch4SubTimeline.to(satProxy, {
+    opacity: 0.9,
+    duration: 2,
+    ease: 'power2.inOut',
+    onStart: () => { if (ch4SatellitePlayer) ch4SatellitePlayer.play(); },
+    onUpdate: () => {
+      ch4SatelliteOpacity = satProxy.opacity;
+      scheduleCh4DeckRebuild();
+    },
+  }, 6);
+  ch4SubTimeline.to(synProxy, {
+    opacity: 0.2,
+    duration: 2,
+    ease: 'power2.inOut',
+    onUpdate: () => {
+      ch4SynopticOpacity = synProxy.opacity;
+      scheduleCh4DeckRebuild();
+    },
+  }, 6);
+
+  // 12s: Return to full synoptic composite (2s)
+  ch4SubTimeline.to(synProxy, {
+    opacity: 0.9,
+    duration: 2,
+    ease: 'power2.inOut',
+    onUpdate: () => {
+      ch4SynopticOpacity = synProxy.opacity;
+      scheduleCh4DeckRebuild();
+    },
+  }, 12);
+  ch4SubTimeline.to(satProxy, {
+    opacity: 0,
+    duration: 2,
+    ease: 'power2.inOut',
+    onUpdate: () => {
+      ch4SatelliteOpacity = satProxy.opacity;
+      scheduleCh4DeckRebuild();
+    },
+  }, 12);
+}
+
+// ── Ch.4 master entry/exit ──
+
+export async function enterChapter4(): Promise<void> {
+  if (!map || ch4Loading) return;
+  ch4Loading = true;
+
+  // Clean up previous state
+  cleanupCh4Sub();
+  ch4ActiveSub = null;
+
+  // Pre-load precipitation manifest
+  if (!ch4PrecipFrames) {
+    try {
+      const manifest = await loadRasterManifest();
+      ch4PrecipFrames = manifest.precipitation.frames;
+    } catch (err) {
+      console.warn('[scroll-engine] Failed to load precip manifest:', err);
+    }
+  }
+
+  // Ensure layers are registered
+  ensureLayer(map, 'ipma-warnings');
+  ensureLayer(map, 'frontal-boundaries');
+  ensureLayer(map, 'precipitation-raster');
+
+  ch4Loaded = true;
+  ch4Loading = false;
+
+  // Start with Kristin (first sub-chapter)
+  ch4ActiveSub = 'kristin';
+  ch4SubVersion++;
+  enterKristin(ch4SubVersion).catch(err => {
+    console.warn('[scroll-engine] Initial Kristin entry failed:', err);
+  });
 }
 
 export function leaveChapter4(): void {
-  destroyPlayer('chapter-4');
+  cleanupCh4Sub();
+  ch4ActiveSub = null;
+  ch4Loaded = false;
+  ch4Loading = false;
   hideDateLabel();
 }
 
 export async function enterChapter5(): Promise<void> {
   if (!map) return;
-  if (activePlayers.has('chapter-4')) leaveChapter4();
+  if (ch4Loaded) leaveChapter4();
 
   const manifest: RasterManifest = await loadRasterManifest();
   ensureLayer(map, 'soil-moisture-raster');
@@ -777,6 +1764,11 @@ export function initScrollObserver(
       // Ch.3 wildfire foreshadow + percentile + precipitation transition
       if (chapterId === 'chapter-3') {
         handleChapter3Progress(response.progress);
+      }
+
+      // Ch.4 sub-chapter state machine
+      if (chapterId === 'chapter-4' && ch4Loaded) {
+        handleChapter4SubChapter(response.progress);
       }
 
       // Drive scroll-driven temporal players

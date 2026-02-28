@@ -174,6 +174,10 @@ export class TemporalPlayer {
 
   destroy(): void {
     this.pause();
+    // Close ImageBitmaps to release GPU memory
+    for (const bitmap of this.frames) {
+      bitmap.close();
+    }
     this.frames = [];
     this.weatherFrames = [];
     this.currentIndex = -1;
