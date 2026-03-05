@@ -81,6 +81,23 @@ Each chapter below specifies: scroll position, camera, basemap, layers visible, 
 player state, text panel content, and transitions. Scroll positions are notional (0.0-1.0
 within each chapter's scroll height).
 
+> **⚠ CRITICAL IMPLEMENTATION NOTE (2026-02-27):** The "Scroll" column in the tables
+> below represents **narrative sequence order**, NOT scroll-position-to-opacity mappings.
+>
+> **CORRECT implementation:** `onStepEnter('chapter-X')` → start a GSAP timeline that
+> reveals layers at designed pacing (e.g. 0s: isobars, 1.5s: particles, 3s: precipitation).
+> `onStepExit` → kill the timeline.
+>
+> **WRONG implementation:** `if (progress >= 0.05) setIsobarOpacity(1)`. This is the v0
+> anti-pattern — fast scroll skips reveals, slow scroll makes users wait.
+>
+> **Exceptions (where scroll DOES drive state):**
+> - Ch.3: scroll = time (Dec→Feb SM frames). Intentional.
+> - Ch.4/Ch.6: scroll selects sub-chapter. But WITHIN each sub-chapter, GSAP timeline.
+> - Ch.7: scroll = evidence accumulation (each scroll milestone adds one layer).
+>
+> See `prompts/P2-architecture-fix.md` for the full rationale and code patterns.
+
 ---
 
 ### CHAPTER 0: THE HOOK — "O Inverno Que Transbordou os Rios"
@@ -131,7 +148,7 @@ within each chapter's scroll height).
 | 0.0 | `[-25, 35]` z2.8 p0 b0, **globe projection**. flyTo 2.5s. | Basemap: dark ocean, globe. | — | Title: *"A Energia do Atlântico"* |
 | 0.1 | Stable globe | **SST anomaly raster** fades in. | — | — |
 | 0.2 | Stable | SST at full opacity (80%). | — | Text: *"O inverno trouxe uma energia incomum..."* |
-| 0.3 | Slight rotation (bearing 0→5 over 3s) | SST + **storm track arcs** appear. 3 ArcLayer great circles from mid-Atlantic to Iberia. Named labels (Kristin, Leonardo, Marta). | — | — |
+| 0.3 | Slight rotation (bearing 0→5 over 3s) | SST + **storm tracks** appear. MapLibre line layer rendering full multi-vertex LineStrings from `storm-tracks-auto.geojson`. Per-storm colors (Kristin red, Leonardo blue, Marta gold). Named labels at midpoints. Real tracked paths from P1.B1 MSLP minima, NOT simplified arcs. | — | — |
 | 0.5 | Stable | **IVT scalar field** fades in over SST. Purple/white band showing atmospheric river corridor. ERA5 daily at 0.5° for seasonal context. | **IVT temporal player starts.** 77 daily frames. 2 fps. Loop. | Text: *"...humidade que viajou milhares de quilómetros..."* |
 | 0.6 | Stable | IVT + **wind particles** (low density, ~2000). Particles flow along the AR corridor, showing transport direction. White trails on dark ocean. | Particles animate continuously (GPU loop, no frame loading). IVT frames advance behind them. | — |
 | 0.8 | Begin slow camera push toward Portugal (easeTo z3.5 over 4s) | IVT intensifies as date approaches January. Particles visibly accelerate in the AR core. | IVT player continues. | *"Três tempestades nomeadas em duas semanas."* |
@@ -140,7 +157,7 @@ within each chapter's scroll height).
 
 **Symbology:**
 - SST anomaly: diverging `blue (#2166ac) → white → red (#b2182b)`, domain [-2°C, +2°C]. `raster-opacity: 0.8`.
-- Storm track arcs: `ArcLayer`, `getSourceColor: [255, 100, 100, 180]`, `getTargetColor: [255, 200, 100, 180]`, `getWidth: 2.5`, `greatCircle: true`. White label per storm.
+- Storm tracks: MapLibre `line` layer, `line-color` per-storm (Kristin `#ff6464`, Leonardo `#64b5f6`, Marta `#ffc864`), `line-width: 2.5`, `line-opacity: 0.9`. Full multi-vertex LineStrings from P1.B1 MSLP minima tracking. Symbol labels at `line-center`.
 - IVT field: sequential `transparent → #4a1486 (purple) → #807dba → #bcbddc → white`. Domain [0, 800 kg/m/s]. `raster-opacity: 0.7`.
 - Wind particles: `ParticleLayer`, `numParticles: 2000`, `color: [255, 255, 255, 160]`, `width: 1.5`, `maxAge: 80`. Low density for Atlantic scale.
 
@@ -211,6 +228,15 @@ temporal players and camera framings. The CLIMAX of the narrative.
 **Architecture:** 4 scroll-triggered sub-chapters (4a-4d). Each sub-chapter has its own
 temporal player that starts on entry. The scroll moves between sub-chapters; the temporal
 player runs independently within each.
+
+> **⚠ IMPLEMENTATION NOTE (added 2026-02-27):** The "Scroll" column in the tables below
+> represents **narrative sequence order**, NOT scroll-position triggers. Within each
+> sub-chapter, the layer reveals are implemented as a **GSAP timeline** that plays at
+> designed pacing when the sub-chapter is entered. The scroll values show the relative
+> ordering and original design intent for when things appear in the narrative. **Do NOT
+> implement as `if (progress >= 0.05) isobars = 1`** — that is the v0 anti-pattern.
+> Instead: `enterKristin() → gsap.timeline().to(state, {isobarOpacity: 1, duration: 1.5})`
+> See `prompts/P2-architecture-fix.md` for the correct pattern.
 
 #### Sub-chapter 4a: KRISTIN — "Kristin"
 **Scroll 0.0-0.3**

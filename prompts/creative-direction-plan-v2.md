@@ -491,8 +491,10 @@ const ivtLayer = new RasterLayer({
 **Secondary overlay:** Wind particles at the 850hPa level flowing THROUGH the IVT field,
 showing the moisture transport direction. The particles add motion and directionality.
 
-**Tertiary accent:** Storm track paths as deck.gl ArcLayer great circles, showing
-Kristin → Leonardo → Marta trajectories. Named labels move along the arcs.
+**Tertiary accent:** Storm track paths rendered as MapLibre line layer using full
+multi-vertex LineStrings from P1.B1 MSLP minima tracking. Per-storm colors. Named labels
+at line-center. ~~(Originally spec'd as deck.gl ArcLayer great circles — superseded by
+real tracked data from P1.B1. See P2-B-chapters.md Session 6.)~~
 
 ```typescript
 import { ArcLayer } from '@deck.gl/layers';
