@@ -24,12 +24,17 @@ mapping activated (EMSR861, EMSR864).
 | Phase | Focus | Status |
 |-------|-------|--------|
 | 0 | Vite scaffold + scroll engine port | **DONE** — merged to main |
-| 1 | Data pipelines (PNGs, frontal GeoJSONs, Sentinel-2) | **NEXT** — prompt at `prompts/phase-1-data-layers.md` |
-| 2 | Core narrative effects (WeatherLayers GL, globe, 3D) | Pending |
+| 1 | Data pipelines (PNGs, frontal GeoJSONs, Sentinel-2) | **DONE** — merged to main (d1088a8) |
+| 2A | Core rendering systems (COG pipeline, WeatherLayers GL, temporal player, globe/terrain) | **DONE** — on v2/phase-2 |
+| 2B | Chapter implementation (wiring chapters to core systems) | **IN PROGRESS** — Sessions 5-6 done, 6.5+ pending |
 | 3 | Polish (responsive, a11y, exploration mode) | Pending |
 
 **Architecture decision:** Vite + vanilla TypeScript + MapLibre v5 + deck.gl v9 + WeatherLayers GL.
 No React. No framework. See `prompts/creative-direction-plan-v2.md` for full rationale.
+
+**Scroll architecture:** Scroll controls chapter SELECTION only. Layer choreography within
+chapters uses GSAP timelines. See `prompts/P2-architecture-fix.md` for rationale. Exceptions:
+Ch.3 (scroll = time), Ch.7 (scroll = evidence accumulation).
 
 ---
 
