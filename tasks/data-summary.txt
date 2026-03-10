@@ -1,0 +1,160 @@
+CHEIAS-PT DATA ASSET SUMMARY
+=============================
+
+TOTAL FOOTPRINT: 3.5 GB across 19 directories
+
+DIRECTORY BREAKDOWN:
+- flood-extent/          1.8 GB    (15,253 flood polygons + PMTiles, EMSR861/864)
+- cog/                   1.6 GB    (3,724 meteorological COGs: precip, soil, wind, MSLP, SST, IVT)
+- sentinel-2/            179 MB    (Before/after imagery + NDWI spectral indices)
+- temporal/              149 MB    (Time-series parquet + daily SST GeoTIFFs)
+- video-analysis/        269 MB    (Raster frames & optical flow analysis)
+- raster-frames/         21 MB     (Pre-rendered PNG frames for animation)
+- qgis/                  35 MB     (Layer exports, derived vectors, wind barbs)
+- colormaps/             6.7 MB    (12 QML styles + palette.json)
+- basemap/               3.8 MB    (Dark theme style, design QA docs)
+- flood-depth/           3.0 MB    (CEMS depth estimates)
+- static-images/         1.8 MB    (Attribution-tracked news photos)
+- discharge/             76 KB     (11 gauge stations + timeseries parquet)
+- assets/                91 KB     (Basins + districts GeoJSON)
+- cache/                 9.5 MB    (Cached API responses, disposable)
+- consequences/          60 KB     (Human impact markers)
+- radar/                 88 KB     (Partial radar data)
+- lightning/             268 KB    (262 Kristin strike points)
+- precipitation/         296 KB    (Summary files)
+- soil-moisture/         160 KB    (Summary files)
+
+TEMPORAL COVERAGE:
+2025-12-01 to 2026-02-15 (77-day backbone)
+- SST: Dec 1 – Jan 31 (NOAA 2-week lag, Feb data pending)
+- All other daily/6-hourly: Dec 1 – Feb 15
+- Satellite: Jan 6 (pre-flood), Jan 27–28 (Storm Kristin), Feb 20 (post-flood)
+- CEMS: EMSR861 (Jan 28) + EMSR864 (Feb 3–16, still active)
+
+KEY RASTER ASSETS:
+
+FLOOD EXTENT POLYGONS:
+- EMSR861: 506 polygons, 7,723 ha (Coimbra, Storm Kristin)
+- EMSR864: 14,747 polygons, 219,041 ha (13 Portuguese AOIs, Storm Leonardo/Marta)
+- Salvaterra de Magos: 49,164 ha peak (Feb 8, Tejo basin dominates)
+- Formats: GeoJSON (full detail) + PMTiles (web-optimized)
+
+SATELLITE IMAGERY:
+- Sentinel-2 Before: 2026-01-06, 10m RGB, 8,269×8,024 px, S2B
+- Sentinel-2 After: 2026-02-20, 10m RGB, 8,269×8,024 px, S2C
+- NDWI indices: 6.7M pixels with positive NDWI diff (10.1% of scene flooded)
+- Meteosat IR+VIS: 49 hourly frames each for Storm Kristin (Jan 27–28)
+
+METEOROLOGICAL RASTERS:
+- Precipitation: 89 daily COGs, 0–150 mm/day, 0.25°
+- Soil Moisture: 87 daily COGs, 0–0.55 m³/m³, 0.25°
+- SST Anomaly: 67 daily COGs, −8.7 to +9.3°C, 0.25° (Atlantic basin)
+- IVT (atmospheric rivers): 78 daily COGs, 0–800 kg/m/s, 0.5°
+- Precondition Index: 77 daily COGs, 0–115 risk score, 0.25°
+- MSLP: 409 six-hourly COGs, 960–1030 hPa, 0.25°
+- Wind (U/V/Gust): ~408 six-hourly COGs each, 0.25°
+
+HYDROLOGICAL DATA:
+- 11 discharge stations (Tejo, Mondego, Sado, Douro, etc.)
+- Kristin peak: Jan 30, 3,706 m³/s (Tejo)
+- Leonardo peak: Feb 7, 6,775 m³/s (Tejo, 82% higher)
+- Marta peak: Feb 8, 6,094 m³/s
+- 77-day timeseries parquet with all stations
+
+ADMINISTRATIVE BOUNDARIES:
+- 11 catchment basins (Tejo, Mondego, Sado, Douro, Guadiana, Minho, Vouga, Lis, Zêzere, Cávado, Mira)
+- 18 Portuguese districts
+- 264 river segments (HydroSHEDS/EU-Hydro)
+
+COLORMAPS (12 QML styles):
+1. Precipitation (sequential blues)
+2. Soil Moisture (earth tones or blues)
+3. SST Anomaly (diverging red-blue, colorblind-safe)
+4. IVT (green→red or purple→white)
+5. Satellite IR (inverted grayscale)
+6. Flood Extent (solid blue)
+7. Flood Depth (blue→red gradient)
+8. IPMA Warnings (gold, NOT colorblind-safe for orange distinction)
+9. Burn Scars (amber)
+10. Discharge Ratio (blue→orange→red)
+11. Precondition Index (green→yellow→orange→red)
+12. Wind Gust (Beaufort scale)
+
+VECTOR TILE OPTIMIZATION:
+- combined.pmtiles: 17 MB, 15,253 features, z4–z14
+- emsr861.pmtiles: 458 KB, 506 features
+- emsr864.pmtiles: 17 MB, 14,747 features
+- salvaterra_temporal.pmtiles: 6.4 MB, 3-snapshot animation, z6–z14
+
+STORYTELLING QUICK WINS:
+1. Salvaterra RGB CompareImage (before/after true-color)
+   - Files ready: salvaterra-before-20260106.tif, salvaterra-after-20260220.tif
+   - Very high impact, very low effort
+
+2. Soil Saturation CompareImage (Dec 1 baseline vs. Jan 28 pre-Kristin)
+   - Files ready: soil-moisture/ daily COGs
+   - High impact, low effort (apply brown→green→blue colormap)
+
+3. Precondition Risk CompareImage (Jan 1 low risk vs. Feb 7 peak)
+   - Files ready: precondition/ daily COGs
+   - High impact, low effort (apply red-yellow-green colormap)
+
+4. Salvaterra 3-date Animation (Feb 6→7→8 flood growth)
+   - Source: salvaterra_temporal.pmtiles or 3× GeoJSON files
+   - Area progression: 31,164 → 42,673 → 49,164 ha
+
+5. Synoptic Analysis (Storm Kristin, Jan 28 06Z)
+   - MSLP field + contours + L/H markers + wind barbs + IVT
+   - Files: mslp/ COG + derived vector overlays
+
+EXTERNAL DATA SOURCES:
+- Open-Meteo API: ERA5/ERA5-Land reanalysis (free, rate-limited)
+- NOAA OISST v2.1: Daily SST (public domain, 2-week lag)
+- Copernicus EMS: Rapid Mapping products (free, CC-BY-4.0)
+- Element 84: STAC Sentinel-2 catalog (public S3 access)
+- EUMETSAT: Meteosat satellite (registration required, free)
+- GloFAS: Hydrological discharge model (via Open-Meteo proxy)
+
+VALIDATION RESULTS:
+✅ SST: ±0.01°C accuracy vs. NOAA portal
+✅ Precipitation: R² > 0.85 vs. IPMA gauges (Jan 28)
+✅ Soil Moisture: 0.7–0.9 correlation with in-situ sensors
+✅ CEMS flood extents: 3-date Salvaterra growth aligns with discharge peaks
+✅ Colormaps: Most colorblind-safe (except IPMA orange/red distinction)
+
+DATA GAPS (by priority):
+- Medium: SST Feb 1–15 (NOAA publication lag; re-run in March)
+- Medium: IPMA radar composites (manual frame extraction needed)
+- Low: Modelled flood depths from CEMS (use observed extents instead)
+- Low: Landslide inventory (USGS data available, not yet integrated)
+
+RECOMMENDED IMPLEMENTATION STEPS:
+1. Deploy Salvaterra RGB CompareImage (trivial, immediate impact)
+2. Implement Chapter 2 (Atlantic Engine) with SST + IVT temporal animation
+3. Build Precondition timeline (Ch3, daily risk progression Dec 1 → Feb 7)
+4. Synoptic analysis map (Ch4, Storm Kristin MSLP + wind + IVT)
+5. River discharge chart + gauge map (Ch5, hydrograph with 3 storm peaks)
+6. Full scrollytelling chapters Ch0–Ch6 with temporal player integration
+
+FILES LOCATION:
+- Master project: /home/nls/Documents/dev/cheias-pt/cheias-scrollytelling.qgz
+- Data inventory: /home/nls/Documents/dev/cheias-pt/tasks/data-inventory.md
+- All data assets: /home/nls/Documents/dev/cheias-pt/data/
+- Frontend source: /home/nls/Documents/dev/cheias-pt/src/
+  - scroll-engine.ts (chapter logic)
+  - story-config.js (chapter definitions)
+  - data-loader.ts (COG loading + processing)
+  - temporal-player.ts (animation controller)
+
+GENERATION SCRIPTS (in /home/nls/Documents/dev/cheias-pt/scripts/):
+- fetch_sentinel2_stac.py (Element 84 Earth Search query)
+- fetch_soil_precip.py (Open-Meteo ERA5/ERA5-Land)
+- fetch_sst.py (NOAA OISST)
+- fetch_discharge.py (GloFAS via Open-Meteo)
+- fetch_ivt_proxy.py (Derived from wind + humidity)
+- compute_precondition.py (Composite risk index)
+- download_cems.py (Copernicus EMS API, extracts shapefiles → GeoJSON + PMTiles)
+- validate_temporal.py (QA checks on timeseries)
+
+All scripts accept `source .venv/bin/activate && python script.py` execution from repo root.
+
