@@ -166,23 +166,40 @@ dataPath={new URL('./data/storm-comparison.csv', import.meta.url).href}
 dataPath={new URL('./media/floods/storm-comparison.csv', import.meta.url).href}
 ```
 
-## Step 6: Remove image references we don't have
+## Step 6: Fix image references
 
-The extended story references images that don't exist yet:
-- `src='/images/floods/salvaterra-hero-02086-20260208.jpg'` (frontmatter — already fixed in step 1)
-- `src='/images/floods/a1-motorway-collapse-20260212.jpg'` (~line 325)
+The extended story references images that don't exist in their original paths.
+Replace with actual assets in `media/floods/`:
 
-For the A1 motorway image: comment it out or replace with a placeholder `<Prose>`
-block that preserves the caption text. We don't have the image yet. Use:
+### 6a. A1 motorway collapse (~line 324-325)
 
+Replace:
 ```jsx
-<Block>
-  <Prose>
-    *[Image: A1 motorway bridge pillar failure near Coimbra, Feb 12, 2026.
-    Source: Portuguese Government / Estradas de Portugal]*
-  </Prose>
-</Block>
+<Image
+  src='/images/floods/a1-motorway-collapse-20260212.jpg'
+  alt='A1 motorway bridge pillar failure near Coimbra (Feb 12, 2026), showing collapsed concrete pier in flood waters'
+/>
 ```
+
+With:
+```jsx
+<Image
+  src={new URL('./media/floods/a1-collapse-coimbra.jpg', import.meta.url).href}
+  alt='A1 motorway collapse at km 191, Casais, Coimbra (Feb 12, 2026) — Viaduct C slab failure after Mondego dike breach'
+/>
+```
+
+Also update the `<Caption>` `attrAuthor` and `attrUrl`:
+```jsx
+<Caption
+  attrAuthor='Photo via @alentejo_1970'
+  attrUrl='https://euroweeklynews.com/2026/02/13/disaster-as-portugals-main-a1-motorway-collapses-after-dike-burst/'
+>
+```
+
+**NOTE:** If `a1-collapse-coimbra.jpg` does not yet exist in `media/floods/`,
+leave the `<Image>` block as-is with the new URL pattern. Nelson will manually
+download the photo before deployment. Do NOT fall back to a prose placeholder.
 
 ## Step 7: Copy to VEDA-UI
 
