@@ -3,8 +3,7 @@
 ## Context
 
 You are working on `deckgl-prototype.html` in the `cheias.pt` project — a flood monitoring
-scrollytelling platform for Portugal. This is a **DevSeed portfolio piece** demonstrating
-cloud-native geospatial skills.
+scrollytelling platform for Portugal, demonstrating cloud-native geospatial skills.
 
 **Architecture decision (from spike testing):** We load COGs directly from Cloudflare R2 using
 `geotiff.js`, apply colormaps client-side via canvas, and render with deck.gl `BitmapLayer`.

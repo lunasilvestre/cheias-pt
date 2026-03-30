@@ -505,7 +505,7 @@ These are the intermediary files that demonstrate geospatial mastery:
 - Output: NDWI difference COG + styled PNG
 - Processing: NDWI = (Green - NIR) / (Green + NIR), compute for both dates, subtract
 - Chapter: Ch.6c overlay (the science version of before/after)
-- Impact: A portfolio piece within a portfolio piece. Shows spectral index expertise.
+- Impact: Shows spectral index expertise and scientific rigor.
 
 **5. Precipitation Accumulation (running 7-day sum)**
 - Input: Daily precip COGs

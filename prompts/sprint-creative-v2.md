@@ -19,7 +19,7 @@ the approved plan — read it end to end before doing anything.
 ### Design References (the quality bar and story)
 5. `data/design-vision.md` — narrative architecture, chapter storyboard, visual identity
 6. `data/video-analysis/MOTION-ANALYSIS.md` — 6 visual effects spec from WeatherWatcher14
-7. `~/.vaults/root/2nd-Brain/Projects/vizzuality-methodology/` — 8 files, Vizzuality quality bar
+7. Vizzuality methodology research — 8 files, quality bar (not included in this repo)
 8. `deckgl-dynamic-mapping-examples.md` — library palette
 
 ### Existing Code (what we're building on)

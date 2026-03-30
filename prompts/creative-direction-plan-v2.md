@@ -44,8 +44,8 @@ Every organization whose quality bar we're targeting uses a bundler:
 deck.gl's own docs state the CDN/script-tag approach is for "prototype environments such
 as Codepen, JSFiddle and Observable." It is explicitly a prototyping path.
 
-**Shipping a CDN-only script-tag app to Development Seed engineers would signal unfamiliarity
-with modern frontend tooling.** It's the equivalent of submitting a portfolio piece with
+**Shipping a CDN-only script-tag app to professional geospatial engineers would signal unfamiliarity
+with modern frontend tooling.** It's the equivalent of submitting a professional project with
 inline CSS.
 
 ### The Stack
@@ -85,8 +85,8 @@ Graphics works — compiled modules, not framework components.
 ### Why Not Svelte
 
 The Pudding's SvelteKit setup is excellent for scrollytelling, and Svelte 5 is technically
-superior for reactive UIs. But adopting Svelte for a portfolio piece targeting DevSeed
-(React shop) means the code won't read as immediately familiar to the audience. TypeScript
+superior for reactive UIs. But adopting Svelte for a geospatial project
+means the code won't read as immediately familiar to most geospatial engineers. TypeScript
 modules with direct MapLibre/deck.gl calls are universally readable.
 
 ### Project Structure
@@ -326,7 +326,7 @@ flyTo for camera. The scroll engine is the narrative backbone. Priority #1.
 ### The Opportunity
 
 Vizzuality uses 3D as a signature capability. Half-Earth's "big beautiful 3D globe for you
-to explore" is their most recognized portfolio piece. The v1 plan was entirely 2D — a
+to explore" is their most recognized project. The v1 plan was entirely 2D — a
 missed opportunity for a story about water flowing downhill through terrain.
 
 ### MapLibre v5 Globe — Production-Ready

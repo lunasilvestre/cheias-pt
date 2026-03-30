@@ -19,8 +19,7 @@ This time: think bigger. Design the product you'd actually want to ship.
    This contains the STORYTELLING vision (chapters, emotional arc, camera positions,
    Portuguese copy). Treat it as creative inspiration, not as a technical spec.
 5. `data/video-analysis/MOTION-ANALYSIS.md` — 6 visual effects from WeatherWatcher14
-6. `~/.vaults/root/2nd-Brain/Projects/vizzuality-methodology/` — all 8 files. This is
-   the quality bar.
+6. Vizzuality methodology research — all 8 files (quality bar, not included in this repo).
 7. `deckgl-dynamic-mapping-examples.md` — library palette
 
 ### What already exists in the repo

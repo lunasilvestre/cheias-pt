@@ -2,7 +2,7 @@
 
 ## Context
 
-You are working on `deckgl-prototype.html` in the `cheias.pt` project — a flood monitoring scrollytelling platform for Portugal. This is a DevSeed portfolio piece demonstrating cloud-native geospatial skills. The file is a single-file layer viewer using MapLibre GL + deck.gl.
+You are working on `deckgl-prototype.html` in the `cheias.pt` project — a flood monitoring scrollytelling platform for Portugal demonstrating cloud-native geospatial skills. The file is a single-file layer viewer using MapLibre GL + deck.gl.
 
 **Current state:** The prototype has raster frame animation (soil moisture + precipitation) but uses hard `updateImage()` swaps — no crossfade. Layer toggles are instant show/hide. No camera transitions.
 

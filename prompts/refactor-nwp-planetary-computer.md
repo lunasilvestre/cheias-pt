@@ -2,9 +2,9 @@
 
 ## Mission
 
-Replace the multi-source NWP acquisition pipeline with a single STAC-based pipeline using Microsoft Planetary Computer's Met Office Global Deterministic 10km dataset. This simplifies 4 fetch scripts into 1, eliminates auth requirements, and demonstrates cloud-native geospatial patterns aligned with Development Seed's stack.
+Replace the multi-source NWP acquisition pipeline with a single STAC-based pipeline using Microsoft Planetary Computer's Met Office Global Deterministic 10km dataset. This simplifies 4 fetch scripts into 1, eliminates auth requirements, and demonstrates cloud-native geospatial patterns.
 
-Read `CLAUDE.md` and `~/.vaults/root/2nd-Brain/Projects/cheias-pt/discovery/17-planetary-computer-nwp.md` first.
+Read `CLAUDE.md` first.
 
 ## Context
 

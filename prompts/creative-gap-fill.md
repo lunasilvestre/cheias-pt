@@ -57,9 +57,8 @@ dramatic build** — not as isolated technical demos, but as storytelling instru
 animation choice should answer: does this increase tension, deliver information, or release
 understanding at the right moment in the arc?
 
-Note: we may have captured richer data sources than listed here. Check the 2nd Brain project
-notes at `~/.vaults/root/2nd-Brain/Projects/cheias-pt/discovery/12-design-document.md` for
-the original design vision and data inventory — it may suggest datasets or narrative beats
+Note: we may have captured richer data sources than listed here. Check `data/design-vision.md`
+for the original design vision and data inventory — it may suggest datasets or narrative beats
 that aren't yet in the prototype.
 
 ## Phase 1: Orientation (READ EVERYTHING FIRST)
@@ -73,9 +72,9 @@ Before designing anything, read:
 5. `data/design-vision.md` — narrative architecture, chapter storyboard, and visual
    design system. Extracted from the original design document — contains the storytelling
    vision and aesthetic identity WITHOUT implementation constraints. This is the story
-   you're designing for. (Full original at `~/.vaults/root/2nd-Brain/Projects/cheias-pt/discovery/12-design-document.md` if needed, but beware: its technical architecture section is outdated and should NOT constrain your recommendations.)
-6. `~/.vaults/root/2nd-Brain/Projects/vizzuality-methodology/` — **the quality bar**.
-   Read all 8 files. This is how Vizzuality builds environmental data platforms:
+   you're designing for.
+6. Vizzuality methodology research — **the quality bar** (not included in this repo).
+   This is how Vizzuality builds environmental data platforms:
    design philosophy (Elena's four questions, progressive disclosure), visual design
    system (dark-first, Firefly basemap, glassmorphism), scrollytelling patterns
    (chapter config, camera transitions, layer choreography), architecture patterns,
@@ -228,7 +227,7 @@ Save these to `prompts/creative-impl-{N}-{name}.md`.
   or any other source has better data or formats that pair more naturally with visualization
   libraries, recommend fetching it. If pre-processing into intermediate formats (GeoParquet,
   PMTiles, FlatGeobuf, image textures) would unlock library capabilities, spec that pipeline.
-- Don't budget this like a sprint. Budget it like a portfolio piece that needs to compete
+- Don't budget this like a sprint. Budget it like a professional project that needs to compete
   with Vizzuality's work. If something takes a week but transforms the product from
   "developer demo" to "editorial geospatial storytelling," it's worth it.
 - Do NOT pre-filter ideas based on implementation difficulty. Report the full creative

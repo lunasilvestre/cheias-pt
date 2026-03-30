@@ -3,8 +3,7 @@
 ## Context for This Chat
 
 We've been through two rounds of creative direction for cheias.pt — a flood geo-narrative
-for Portugal targeting Development Seed as portfolio piece, benchmarked against Vizzuality's
-work. The agent research is solid. The creative direction plan (v1) has good storytelling
+for Portugal, benchmarked against Vizzuality's production work. The agent research is solid. The creative direction plan (v1) has good storytelling
 bones but anchored too conservatively on architecture and technology choices.
 
 This chat picks up where the last left off. Don't re-run research. Challenge and evolve.
@@ -23,7 +22,7 @@ This chat picks up where the last left off. Don't re-run research. Challenge and
 ### Design references
 5. `data/design-vision.md` — narrative architecture + visual identity (constraint-free extract)
 6. `data/video-analysis/MOTION-ANALYSIS.md` — 6 visual effects spec
-7. `~/.vaults/root/2nd-Brain/Projects/vizzuality-methodology/` — ALL 8 files (quality bar)
+7. Vizzuality methodology research (quality bar, not included in this repo)
 8. `deckgl-dynamic-mapping-examples.md` — library palette
 
 ### What exists in the repo

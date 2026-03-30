@@ -2,7 +2,7 @@
 
 ## Context
 
-You are working on `deckgl-prototype.html` in the `cheias.pt` project — a flood monitoring scrollytelling platform for Portugal. This is a **DevSeed portfolio piece**.
+You are working on `deckgl-prototype.html` in the `cheias.pt` project — a flood monitoring scrollytelling platform for Portugal.
 
 This prompt implements the highest "wow factor" effect: animated wind particle streamlines showing jet stream and cyclonic flow, inspired by Windy.com's particle visualization.
 

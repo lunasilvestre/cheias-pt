@@ -2,18 +2,18 @@
 
 ## Mission
 
-Validate that the data tells the story before we build the story. We have a design document (`~/.vaults/root/2nd-Brain/Projects/cheias-pt/discovery/12-design-document.md`) for a scrollytelling piece about Portugal's Jan–Feb 2026 flood crisis. Before building the frontend, we need to confirm the data actually shows what the narrative claims: soil saturating over weeks, rivers spiking past thresholds, precipitation accumulating to extreme levels. If the data doesn't show it, we need to know now.
+Validate that the data tells the story before we build the story. We have a design document (`data/design-vision.md`) for a scrollytelling piece about Portugal's Jan–Feb 2026 flood crisis. Before building the frontend, we need to confirm the data actually shows what the narrative claims: soil saturating over weeks, rivers spiking past thresholds, precipitation accumulating to extreme levels. If the data doesn't show it, we need to know now.
 
 Secondary goal: produce the pre-processed JSON/GeoJSON data files that the scroll frontend will consume, and scaffold the scroll infrastructure so a follow-up sprint can plug chapters in.
 
-**Read `~/.vaults/root/2nd-Brain/Projects/cheias-pt/discovery/12-design-document.md` in the vault before doing anything.** It contains the full narrative architecture, chapter storyboard, data inventory, and technical architecture. Every agent needs to understand the story we're trying to tell.
+**Read `data/design-vision.md` before doing anything.** It contains the full narrative architecture, chapter storyboard, and visual identity. Every agent needs to understand the story we're trying to tell.
 
 Also read `CLAUDE.md` in the project root — it has the current project state and geographic asset details.
 
 ## Context
 
 - **Project root:** `~/Documents/dev/cheias-pt/`
-- **Vault:** `~/.vaults/root/2nd-Brain/Projects/cheias-pt/`
+- **Design docs:** `data/design-vision.md`
 - **Existing assets:** `assets/basins.geojson` (11 catchment basins), `assets/districts.geojson` (18 districts with ipma_code)
 - **Existing notebooks:** `notebooks/01-data-exploration.ipynb`, `notebooks/02-geographic-assets.ipynb`
 - **Skills available:** `geo-storytelling`, `civic-map-ux`, `data-trust` (in Claude Code skills at `~/.claude/skills`)
@@ -127,4 +127,4 @@ The lead should synthesize findings into a brief validation report:
 4. **Blockers:** What needs Nelson's manual intervention (CEMS downloads, consequence marker curation, photo sourcing)?
 5. **Recommended next sprint:** What should the next agent team tackle?
 
-Save the report to `notebooks/VALIDATION-REPORT.md` and also to the vault at `~/.vaults/root/2nd-Brain/Projects/cheias-pt/discovery/13-data-validation-report.md`.
+Save the report to `notebooks/VALIDATION-REPORT.md`.

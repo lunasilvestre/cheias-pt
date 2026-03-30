@@ -4,10 +4,7 @@
 
 Load all cheias.pt raster and vector data into QGIS and build symbology that matches the WeatherWatcher14 video screenshots. The goal is Windy/WXCharts-quality visualizations rendered in QGIS, then exportable as style definitions (QML) for translation to MapLibre/titiler colormaps.
 
-Reference screenshots are in the Obsidian vault:
-`~/.vaults/root/2nd-Brain/Projects/cheias-pt/discovery/16-weather-video-data-sources.md`
-
-The images are accessible via symlink: `assets/cheias-pt/research/youtube/Screenshot_*.png`
+Reference screenshots from WeatherWatcher14 videos were used for visual matching (not included in this repo).
 
 ## Data Locations
 
