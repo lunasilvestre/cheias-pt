@@ -2,7 +2,6 @@
 
 Extracted from the original design document. This contains the storytelling
 architecture and visual identity — NOT implementation constraints.
-The full document lives at `~/.vaults/root/2nd-Brain/Projects/cheias-pt/discovery/12-design-document.md`.
 
 NOTE: The data gaps listed in the original chapter storyboard (SST, IVT, CEMS flood
 extent, consequence markers, IPMA warnings, etc.) have largely been resolved since it
@@ -29,7 +28,7 @@ The original cheias.pt concept was a real-time monitoring platform (Mode 1 Glanc
 
 Portugal is in a state of emergency. Storms Kristin, Leonardo, and Marta have killed at least 11 people, displaced thousands, collapsed the A1 motorway, burst the Mondego levee, and triggered a €2.5B aid package across 69 municipalities. The Tejo reached its highest level since 1997. The Sado hit levels unseen since 1989.
 
-This is not a moment for a dashboard that needs live data feeds and backend uptime. This is a moment for a **retrospective narrative** — a finished, publishable artifact that tells the story of what happened and why. It works as a static deploy (no backend), it works in any weather, and it's the exact deliverable that Vizzuality and Development Seed ship for environmental organizations worldwide.
+This is not a moment for a dashboard that needs live data feeds and backend uptime. This is a moment for a **retrospective narrative** — a finished, publishable artifact that tells the story of what happened and why. It works as a static deploy (no backend), it works in any weather, and it's the exact format that leading geo-visualization studios ship for environmental organizations worldwide.
 
 ### Persona shift: from urgency to understanding
 
@@ -44,9 +43,9 @@ File 11 defined four personas around the question "Am I in danger right now?" Th
 
 The common thread: **curiosity about what went wrong**, not urgency about what's going wrong. This is a story about causality, not a feed of alerts.
 
-### Portfolio positioning
+### Technical positioning
 
-For Development Seed evaluators: this piece demonstrates the same stack they build (MapLibre, STAC, COG, Sentinel imagery, cloud-native geospatial) but wrapped in the editorial storytelling quality of a Vizzuality piece. It proves Nelson can bridge the technical pipeline with the communication layer — which is exactly the gap most geo-developers can't cross.
+This piece demonstrates a modern cloud-native geospatial stack (MapLibre, STAC, COG, Sentinel imagery) combined with editorial storytelling quality. It bridges the technical pipeline with the communication layer — which is the gap most geo-developers don't cross.
 
 ---
 
