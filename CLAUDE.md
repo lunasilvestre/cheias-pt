@@ -7,10 +7,8 @@ Always use the project virtual environment at `.venv/`. Activate with `source .v
 
 A **geo-narrative** about Portugal's January–February 2026 flood crisis — what happened,
 why it happened, and what it means. Told through maps, satellite imagery, and
-hydro-meteorological data.
-
-Portfolio piece targeting Development Seed (Lisbon + DC). Public service artifact for
-Portuguese citizens, journalists, and local officials.
+hydro-meteorological data. Open-source civic tech for Portuguese citizens, journalists,
+and local officials.
 
 **The crisis:** Storm cluster (Kristin → Leonardo → Marta) killed 11+, displaced thousands,
 collapsed the A1 motorway, burst the Mondego levee, triggered €2.5B aid package across 69
@@ -75,26 +73,11 @@ the current phase, note it in `todo.md` and move on.
 
 ### Design & Story
 
-| What | Where |
-|------|-------|
-| Narrative storyboard | `data/design-vision.md` |
-| Motion analysis (6 visual effects) | `data/video-analysis/MOTION-ANALYSIS.md` |
-| Vizzuality methodology (quality bar) | `~/.vaults/root/2nd-Brain/Projects/vizzuality-methodology/` (8 files) |
-| Library catalogue | `deckgl-dynamic-mapping-examples.md` |
-| Design document (original) | `~/.vaults/root/2nd-Brain/Projects/cheias-pt/discovery/12-design-document.md` |
-
-### Technical Reference
-
-| What | Where |
-|------|-------|
-| Detailed data pipeline docs | `CLAUDE-v4-scrollytelling.md` |
-| Flood dynamics & data sources | `~/.vaults/root/2nd-Brain/Projects/cheias-pt/discovery/07-flood-dynamics-prediction.md` |
-| Data source tier list | `~/.vaults/root/2nd-Brain/Projects/cheias-pt/discovery/06-synthesis.md` |
-| NWP pipeline | `prompts/refactor-nwp-planetary-computer.md` |
-
-### Historical CLAUDE.md versions (context only, do not follow)
-
-`CLAUDE-v1.md`, `CLAUDE-v2.md`, `CLAUDE-v3.md`, `CLAUDE-v4-scrollytelling.md`
+Design research and discovery documents are in the project's Obsidian vault (not included in this repo).
+Key reference files within this repo:
+- `data/design-vision.md` — Narrative storyboard and visual identity
+- `data/colormaps/palette.json` — All 12 colormap definitions
+- `data/colormaps/COLORMAP-DECISIONS.md` — Rationale and composite tests
 
 ---
 
