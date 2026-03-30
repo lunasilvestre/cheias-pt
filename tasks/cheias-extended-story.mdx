@@ -1,38 +1,24 @@
 ---
 id: 'winter-2025-26-floods'
 name: 'Winter 2025-26 Portuguese Flood Events: A Compound Disaster'
-description: 'How sequential storms on saturated soils created an unprecedented flood catastrophe across central and southern Portugal. Featuring satellite data, hydrological monitoring, and climate attribution.'
+description: 'How sequential storms on saturated soils created an unprecedented flood catastrophe across central and southern Portugal.'
 media:
-  src: /images/floods/salvaterra-hero-02086-20260208.jpg
-  alt: 'Aerial view of Salvaterra de Magos floodplain at peak inundation (Feb 8, 2026), showing 49,164 hectares underwater'
+  src: ::file ./media/floods/hero-sentinel1-tejo.jpg
+  alt: 'Sentinel-1 SAR image showing Tejo river floodplain inundation (Feb 7, 2026) compared to December 2025 baseline'
   author:
     name: 'Copernicus Sentinel-1 SAR'
     url: 'https://sentinels.copernicus.eu/'
+pubDate: 2026-03-05T00:00
 taxonomy:
-  - name: 'Topics'
+  - name: Topics
     values:
-      - 'Flood Monitoring'
-      - 'Climate Change'
-      - 'Emergency Response'
-      - 'Hydrological Extremes'
-      - 'Portugal'
-featured: true
-geography:
-  bounds: [-10.0, 36.8, 0.5, 42.0]
-  center: [9.5, 39.0]
-datasets:
-  - 'flood-extent-emsr864'
-  - 'discharge-timeseries'
-  - 'precipitation-daily'
-  - 'soil-moisture-daily'
-  - 'sst-anomaly'
-  - 'ivt-atmospheric-rivers'
-  - 'wind-field-6h'
-temporalExtent:
-  start: '2025-12-01'
-  end: '2026-02-21'
-  focusStart: '2026-01-28'
-  focusEnd: '2026-02-08'
+      - Flood Monitoring
+      - Climate Change
+      - Emergency Response
+  - name: Subtopics
+    values:
+      - Hydrological Extremes
+      - Portugal
 ---
 
 # Winter 2025-26 Portuguese Flood Events: A Compound Disaster
@@ -70,7 +56,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
   </Chapter>
 
   <Chapter
-    center={[9.5, 39]}
+    center={[-9.5, 39]}
     zoom={7}
     layerId='soil-moisture'
     datetime='2026-01-27'
@@ -83,7 +69,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
   </Chapter>
 
   <Chapter
-    center={[8.5, 39.5]}
+    center={[-8.5, 39.5]}
     zoom={5}
     layerId='ivt-atmospheric-rivers'
     datetime='2026-01-28'
@@ -112,7 +98,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
 
 <ScrollytellingBlock>
   <Chapter
-    center={[8.5, 40]}
+    center={[-8.5, 40]}
     zoom={6}
     layerId='precipitation-daily'
     datetime='2026-01-28'
@@ -130,7 +116,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
   </Chapter>
 
   <Chapter
-    center={[8.5, 40]}
+    center={[-8.5, 40]}
     zoom={6}
     layerId='mslp-contours'
     datetime='2026-01-28T18Z'
@@ -143,7 +129,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
   </Chapter>
 
   <Chapter
-    center={[9.2, 38.8]}
+    center={[-9.2, 38.8]}
     zoom={8}
     layerId='precipitation-daily'
     datetime='2026-01-30'
@@ -156,7 +142,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
   </Chapter>
 
   <Chapter
-    center={[9.2, 38.8]}
+    center={[-9.2, 38.8]}
     zoom={8}
     layerId='discharge-tejo'
     datetime='2026-01-30'
@@ -172,7 +158,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
 <Block type='wide'>
   <Figure>
     <Chart
-      dataPath={new URL('./data/discharge-timeseries.csv', import.meta.url).href}
+      dataPath={new URL('./media/floods/discharge-timeseries.csv', import.meta.url).href}
       idKey='Station'
       xKey='Date'
       yKey='Discharge_m3s'
@@ -231,8 +217,8 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
 <Block type='wide'>
   <Figure>
     <Table
-      dataPath={new URL('./data/storm-comparison.csv', import.meta.url).href}
-      columnsToSort={['Max_Wind_kmh', 'Deaths_Direct', 'Evacuations']}
+      dataPath={new URL('./media/floods/storm-comparison.csv', import.meta.url).href}
+      columnToSort={['Max_Wind_kmh', 'Deaths_Direct', 'Evacuations']}
     />
     <Caption>
       Storm sequence comparison: Kristin set wind records. Leonardo triggered evacuations. Marta sustained damage. Cumulative deaths: 18+ across three storms over 10 days.
@@ -246,7 +232,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
 
 <ScrollytellingBlock>
   <Chapter
-    center={[9.5, 39]}
+    center={[-9.5, 39]}
     zoom={7}
     layerId='precipitation-accumulated'
     datetime='2026-02-03'
@@ -259,7 +245,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
   </Chapter>
 
   <Chapter
-    center={[9.2, 38.8]}
+    center={[-9.2, 38.8]}
     zoom={8}
     layerId='discharge-tejo'
     datetime='2026-02-07'
@@ -276,7 +262,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
   </Chapter>
 
   <Chapter
-    center={[8.9, 38.7]}
+    center={[-8.9, 38.7]}
     zoom={9}
     layerId='flood-extent-emsr864'
     datetime='2026-02-08'
@@ -289,7 +275,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
   </Chapter>
 
   <Chapter
-    center={[9.0, 38.5]}
+    center={[-9.0, 38.5]}
     zoom={7}
     showBaseMap={true}
   >
@@ -322,12 +308,12 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
 <Block type='full'>
   <Figure>
     <Image
-      src='/images/floods/a1-motorway-collapse-20260212.jpg'
-      alt='A1 motorway bridge pillar failure near Coimbra (Feb 12, 2026), showing collapsed concrete pier in flood waters'
+      src={new URL('./media/floods/a1-collapse-coimbra.jpg', import.meta.url).href}
+      alt='A1 motorway collapse at km 191, Casais, Coimbra (Feb 12, 2026) — Viaduct C slab failure after Mondego dike breach'
     />
     <Caption
-      attrAuthor='Portuguese Government / Estradas de Portugal'
-      attrUrl='https://www.estradas.pt/'
+      attrAuthor='Photo via @alentejo_1970'
+      attrUrl='https://euroweeklynews.com/2026/02/13/disaster-as-portugals-main-a1-motorway-collapses-after-dike-burst/'
     >
       The A1 motorway collapse near Coimbra (Feb 12, 2026): A single pillar failure severed Portugal's main transport corridor. The collapse was preceded by the Mondego dike rupture (Feb 11), sending floodwaters against the bridge foundation.
     </Caption>
@@ -382,7 +368,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
 <Block type='wide'>
   <Figure>
     <Chart
-      dataPath={new URL('./data/fatality-timeline.csv', import.meta.url).href}
+      dataPath={new URL('./media/floods/fatality-timeline.csv', import.meta.url).href}
       idKey='Event'
       xKey='Date'
       yKey='Cumulative'
@@ -405,7 +391,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
 
 <ScrollytellingBlock>
   <Chapter
-    center={[8.9, 38.7]}
+    center={[-8.9, 38.7]}
     zoom={9}
     layerId='flood-extent-emsr864'
     datetime='2026-02-08'
@@ -420,7 +406,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
   </Chapter>
 
   <Chapter
-    center={[8.9, 38.7]}
+    center={[-8.9, 38.7]}
     zoom={10}
     layerId='flood-extent-emsr864'
     datetime='2026-02-08'
@@ -438,7 +424,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
   </Chapter>
 
   <Chapter
-    center={[8.5, 40.5]}
+    center={[-8.5, 40.5]}
     zoom={9}
     layerId='flood-extent-emsr864'
     datetime='2026-02-08'
@@ -453,7 +439,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
   </Chapter>
 
   <Chapter
-    center={[8.5, 38.5]}
+    center={[-8.5, 38.5]}
     zoom={8}
     layerId='flood-extent-emsr864'
     datetime='2026-02-08'
@@ -477,7 +463,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
       layerId='flood-extent-emsr864'
       dateTime='2026-02-08'
       zoom={7}
-      center={[9.5, 39.0]}
+      center={[-9.5, 39.0]}
       basemapId='satellite'
     />
     <Caption
@@ -518,23 +504,33 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
 
 <Block type='wide'>
   <Figure>
-    <Chart
-      dataPath={new URL('./data/rainfall-anomaly.csv', import.meta.url).href}
-      idKey='Year'
-      xKey='Month'
-      yKey='Anomaly_Percent'
-      xAxisLabel='Month'
-      yAxisLabel='Percent of 1991-2020 Average'
-      altTitle='January Rainfall: 2026 vs Historical (1991-2020)'
-      altDesc='Bar chart showing January 2026 at 222% of normal (2nd wettest since 2000), compared to historical baseline (100%) and prior wet years'
-      colors={['#1f77b4', '#ff7f0e']}
-      colorScheme='blues'
+    <Image
+      src={new URL('./media/floods/discharge-comparison-story.png', import.meta.url).href}
+      alt='Six Portuguese rivers showing 3–11× discharge amplification during the Jan 29 – Feb 12 storm cluster, with peaks aligning to Storms Leonardo and Marta'
+    />
+    <Caption
+      attrAuthor='GloFAS via Open-Meteo Flood API'
+      attrUrl='https://flood-api.open-meteo.com/'
+    >
+      All eight monitored rivers showed extreme storm amplification. Guadiana
+      and Lis experienced the most dramatic response (8–11× pre-storm baseline).
+      Blue shading shows historical IQR; grey dotted line is the historical maximum.
+    </Caption>
+  </Figure>
+</Block>
+
+<Block type='wide'>
+  <Figure>
+    <Image
+      src={new URL('./media/floods/rainfall-anomaly.png', import.meta.url).href}
+      alt='Bar chart showing January 2026 at 252% of 2000-2020 average rainfall — 2nd wettest January in 26-year ERA5 dataset'
     />
     <Caption
       attrAuthor='Open-Meteo ERA5, IPMA Climate Data'
       attrUrl='https://dataclima.ipma.pt/en/'
     >
-      January 2026: 222% of 1991-2020 average rainfall. 2nd wettest January in 26-year dataset. Only January 2010 was wetter (~260% of average).
+      January 2026: 252% of 2000-2020 average rainfall. 2nd wettest January
+      in 26-year ERA5 dataset. Only winter 2000-01 was wetter (253%).
     </Caption>
   </Figure>
 </Block>
@@ -570,7 +566,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
 
 <ScrollytellingBlock>
   <Chapter
-    center={[9.5, 39]}
+    center={[-9.5, 39]}
     zoom={7}
     layerId='flood-extent-receding'
     datetime='2026-02-21'
@@ -583,7 +579,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
   </Chapter>
 
   <Chapter
-    center={[9.0, 38.5]}
+    center={[-9.0, 38.5]}
     zoom={8}
     showBaseMap={true}
   >
@@ -599,7 +595,7 @@ How sequential storms, saturated soils, and aging infrastructure created the lar
   </Chapter>
 
   <Chapter
-    center={[9.5, 39]}
+    center={[-9.5, 39]}
     zoom={7}
     showBaseMap={true}
   >
