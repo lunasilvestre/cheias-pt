@@ -118,3 +118,8 @@ data/colormaps/screenshots/
 # Cartographic design docs (override data/**/*.json):
 !data/basemap/cheias-dark.json
 !data/colormaps/palette.json
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
