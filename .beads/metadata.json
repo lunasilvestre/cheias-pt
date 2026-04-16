@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "cheias_pt",
+  "project_id": "9e1b7851-9988-4935-bff9-5dc1e49e899d"
+}
